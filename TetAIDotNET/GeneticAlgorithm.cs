@@ -8,5 +8,13 @@ namespace TetAIDotNET
 {
     class GeneticAlgorithm
     {
+
+
+    }
+
+    class Indivisual
+    {
+       public float[] values;
+        public float evaluation;
     }
 }

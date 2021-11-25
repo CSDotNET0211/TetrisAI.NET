@@ -27,7 +27,7 @@ namespace TetAIDotNET
                     if(action==Action.Null)
                         break;
                     environment.UserInput(action);
-                    Thread.Sleep(10);
+                    Thread.Sleep(30);
                 environment.PrintGame();
                 }
 
