@@ -26,22 +26,21 @@ namespace TetAIDotNET
 
         static public Way Search(int[,] field, Mino current, MinoKind[] nexts)
         {
-            var set = new List<Way>();
+            var set = new Dictionary<int, Way>();
             var actions = new Action[20];
 
             SearchTreeDeep(set, field, current, 0, new Action[20], new Dictionary<int, int>(), 0);
 
 
+            var testways = set.Values.ToArray();
+            Array.Sort(testways, ISortWay.GetInstance());
 
-            set.Sort(ISortWay.GetInstance());
-            //    Console.ReadKey();
-
-            return set[set.Count - 1];
+            return testways[testways.Length - 1];
         }
 
         static public void SearchTree(int[,] field, Mino current, MinoKind[] nexts)
         {
-            var set = new List<Way>();
+            var set = new Dictionary<int, Way>();
             var actions = new Action[20];
 
             SearchTreeDeep(set, field, current, 0, new Action[20], new Dictionary<int, int>(), 0);
@@ -56,13 +55,15 @@ namespace TetAIDotNET
             else
                 return;
 
-            //上位20個
-            set.Sort(ISortWay.GetInstance());
+
+            var testways = set.Values.ToArray();
+            Array.Sort(testways, ISortWay.GetInstance());
+
 
             var nextgen = new Way[20];
             for (int i = 0; i < nextgen.Length; i++)
             {
-                nextgen[i] = set[set.Count - 1 - i];
+                nextgen[i] = testways[testways.Length - 1 - i];
             }
 
             foreach (var way in nextgen)
@@ -79,7 +80,7 @@ namespace TetAIDotNET
             }
         }
 
-        static private void SearchTreeDeep(List<Way> set, int[,] field, Mino current, int actionCount, Action[] actions, Dictionary<int, int> pastway, int rotateCount, bool historyRight = false, bool historyLeft = false)
+        static private void SearchTreeDeep(Dictionary<int, Way> set, int[,] field, Mino current, int actionCount, Action[] actions, Dictionary<int, int> pastway, int rotateCount, bool historyRight = false, bool historyLeft = false)
         {
             if (HistoryContains(pastway, current, actionCount))
             {
@@ -116,8 +117,29 @@ namespace TetAIDotNET
                 var array = actions.CloneArray();
                 array[actionCount] = Action.Harddrop;
 
+
+
+                var hash = GetHash(mino, true);
                 //pastチェック
-                set.Add(new Way(array, Evaluation.Evaluate(field, mino), mino.Positions));
+                Way testvalue;
+                if (set.TryGetValue(hash, out testvalue))
+                {
+                    //存在したら小さい場合のみ
+                    if (testvalue.Actions.ActionCount() > array.ActionCount())
+                    {
+                        set.Remove(hash);
+                        set.Add(hash,
+                       new Way(array, Evaluation.Evaluate(field, mino), mino.Positions));
+
+                    }
+                }
+                else
+                {
+                    set.Add(hash,
+                        new Way(array, Evaluation.Evaluate(field, mino), mino.Positions));
+                }
+
+                //  set.Add();
             }
 
             //右移動
@@ -210,8 +232,19 @@ namespace TetAIDotNET
 
             }
 
-
             //ソフトドロップ
+
+            int GetHash(Mino mino, bool containsRotate)
+            {
+                int testway = 0;
+                testway += mino.AbsolutelyPosition.y;
+                testway += mino.AbsolutelyPosition.x * 100;
+                if (containsRotate)
+                    testway += (int)mino.Rotation * 10000;
+                testway += 100000;
+
+                return testway;
+            }
 
             bool HistoryContains(Dictionary<int, int> way, Mino mino, int count)
             {

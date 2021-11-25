@@ -24,11 +24,13 @@ namespace TetAIDotNET
 
             if (x.Evaluation < y.Evaluation)
                 return -1;
+            int xcount = x.Actions.ActionCount();
+            int ycount = y.Actions.ActionCount();
 
-            if (x.Actions.Length > y.Actions.Length)
+            if (xcount < ycount)
                 return 1;
-            if (x.Actions.Length < y.Actions.Length)
-                return 1;
+            if (xcount > ycount)
+                return -1;
 
             return 0;
         }

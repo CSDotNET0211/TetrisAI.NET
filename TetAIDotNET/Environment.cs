@@ -348,7 +348,7 @@ namespace TetAIDotNET
             switch (action)
             {
                 case Action.MoveRight:
-                    Console.Beep(262, 200);
+               //     Console.Beep(262, 200);
                     if (CheckValidPos(field, _nowMino, Vector2.x1))
                     {
                         _nowMino.Positions[0] += Vector2.x1;
@@ -359,7 +359,7 @@ namespace TetAIDotNET
                     break;
 
                 case Action.MoveLeft:
-                    Console.Beep(294, 200);
+                 //   Console.Beep(294, 200);
                     if (CheckValidPos(field, _nowMino, Vector2.mx1))
                     {
                         _nowMino.Positions[0] += Vector2.mx1;
@@ -370,7 +370,7 @@ namespace TetAIDotNET
                     break;
 
                 case Action.RotateRight:
-                    Console.Beep(330, 200);
+                  //  Console.Beep(330, 200);
                     if (TryRotate(Rotate.Right, field, ref _nowMino, out srs))
                     {
                         SimpleRotate(Rotate.Right, ref _nowMino);
@@ -382,7 +382,7 @@ namespace TetAIDotNET
                     break;
 
                 case Action.RotateLeft:
-                    Console.Beep(349, 200);
+                 //   Console.Beep(349, 200);
                     if (TryRotate(Rotate.Left, field, ref _nowMino, out srs))
                     {
                         SimpleRotate(Rotate.Left, ref _nowMino);
@@ -394,7 +394,7 @@ namespace TetAIDotNET
                     break;
 
                 case Action.Harddrop:
-                    Console.Beep(392, 200);
+                    //Console.Beep(392, 200);
                     SetMino();
                     break;
 

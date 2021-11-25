@@ -13,11 +13,21 @@ namespace TetAIDotNET
             var newmino = new Mino();
             newmino.MinoKind = mino.MinoKind;
             newmino.Rotation = mino.Rotation;
-            newmino.AbsolutelyPosition= mino.AbsolutelyPosition;
+            newmino.AbsolutelyPosition = mino.AbsolutelyPosition;
             newmino.Positions = new Vector2[4];
             Array.Copy(mino.Positions, newmino.Positions, mino.Positions.Length);
             //     Buffer.BlockCopy(mino.Positions, 0, newmino.Positions, 0, mino.Positions.Length);
             return newmino;
+        }
+
+        public static int ActionCount(this Action[] array)
+        {
+            int count = 0;
+            foreach (var value in array)
+                if (value != Action.Null)
+                    count++;
+
+            return count;
         }
 
         public static Vector2 Revert(this Vector2 vec)
@@ -30,15 +40,15 @@ namespace TetAIDotNET
         {
             var array = new Action[actions.Length];
             Array.Copy(actions, array, actions.Length);
-      //      Buffer.BlockCopy(actions, 0, array, 0, actions.Length);
+            //      Buffer.BlockCopy(actions, 0, array, 0, actions.Length);
             return array;
         }
 
         public static int[,] CloneArray(this int[,] array)
         {
-            var array2 = new int[Environment.FIELD_WIDTH,Environment.FIELD_HEIGHT];
+            var array2 = new int[Environment.FIELD_WIDTH, Environment.FIELD_HEIGHT];
             Array.Copy(array, array2, array.Length);
-          //  Buffer.BlockCopy(array, 0, array2, 0, array.Length);
+            //  Buffer.BlockCopy(array, 0, array2, 0, array.Length);
             return array2;
         }
 
