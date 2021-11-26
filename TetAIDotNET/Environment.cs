@@ -42,10 +42,6 @@ namespace TetAIDotNET
             return new Vector2(obj.x * obj2.x, obj.y * obj2.y);
         }
 
-        public override int GetHashCode()
-        {
-            return x.GetHashCode() ^ y.GetHashCode();
-        }
     }
 
     public enum MinoKind
@@ -84,20 +80,6 @@ namespace TetAIDotNET
         public Rotation Rotation;
         public Vector2[] Positions;
 
-        /// <summary>
-        /// *このハッシュ生成は４つの位置のみ回転で生成してます*
-        /// </summary>
-        /// <returns></returns>
-        public override int GetHashCode()
-        {
-            int value = Positions[0].GetHashCode();
-            value ^= Positions[1].GetHashCode();
-            value ^= Positions[2].GetHashCode();
-            value ^= Positions[3].GetHashCode();
-            //  value ^= ((int)Rotation).GetHashCode();
-
-            return value;
-        }
     }
 
     public enum Rotate
@@ -111,6 +93,9 @@ namespace TetAIDotNET
     {
         MinoKind[] bagArray = new MinoKind[] { MinoKind.I, MinoKind.J, MinoKind.L, MinoKind.O, MinoKind.S, MinoKind.T, MinoKind.Z };
         List<MinoKind> _bag;
+        public int _clearedLine = 0;
+        public int _score = 0;
+        public bool _dead = false;
 
         Mino _nowMino;
         MinoKind[] _next = new MinoKind[5];
@@ -201,6 +186,15 @@ namespace TetAIDotNET
 
             if (mino == null)
                 RefreshNext(_next);
+
+            foreach (var test in _nowMino.Positions)
+            {
+                if (field[test.x, test.y] == 1)
+                {
+                    _dead = true;
+                    break;
+                }
+            }
 
             Vector2[] GetDefaultMinoPos(MinoKind kind)
             {
@@ -348,7 +342,7 @@ namespace TetAIDotNET
             switch (action)
             {
                 case Action.MoveRight:
-               //     Console.Beep(262, 200);
+                    //     Console.Beep(262, 200);
                     if (CheckValidPos(field, _nowMino, Vector2.x1))
                     {
                         _nowMino.Positions[0] += Vector2.x1;
@@ -359,7 +353,7 @@ namespace TetAIDotNET
                     break;
 
                 case Action.MoveLeft:
-                 //   Console.Beep(294, 200);
+                    //   Console.Beep(294, 200);
                     if (CheckValidPos(field, _nowMino, Vector2.mx1))
                     {
                         _nowMino.Positions[0] += Vector2.mx1;
@@ -370,7 +364,7 @@ namespace TetAIDotNET
                     break;
 
                 case Action.RotateRight:
-                  //  Console.Beep(330, 200);
+                    //  Console.Beep(330, 200);
                     if (TryRotate(Rotate.Right, field, ref _nowMino, out srs))
                     {
                         SimpleRotate(Rotate.Right, ref _nowMino);
@@ -382,7 +376,7 @@ namespace TetAIDotNET
                     break;
 
                 case Action.RotateLeft:
-                 //   Console.Beep(349, 200);
+                    //   Console.Beep(349, 200);
                     if (TryRotate(Rotate.Left, field, ref _nowMino, out srs))
                     {
                         SimpleRotate(Rotate.Left, ref _nowMino);
@@ -414,6 +408,34 @@ namespace TetAIDotNET
                     Hold();
                     break;
             }
+        }
+
+        static public float GetEval(float[] values)
+        {
+            //操作終わった後、150ライン消しか死ぬまで
+            //設置も１ポイント
+            Environment environment = new Environment();
+            environment.Init();
+            Evaluation.Weight = values;
+
+            while (true)
+            {
+                var result = environment.Search();
+                foreach (var action in result.Actions)
+                {
+                    if (action == Action.Null)
+                        break;
+                    environment.UserInput(action);
+                }
+
+                if (environment._dead || environment._clearedLine == 150)
+                {
+                    return environment._score;
+                }
+
+            }
+
+
         }
 
         private void Hold()
@@ -470,7 +492,27 @@ namespace TetAIDotNET
                 field[pos.x, pos.y] = 1;
             }
 
-            CheckClearedLine(field);
+            _score += 2;
+            var line = CheckClearedLine(field);
+            _clearedLine += line;
+            switch (line)
+            {
+                case 1:
+                    _score += 100;
+                    break;
+
+                case 2:
+                    _score += 300;
+                    break;
+
+                case 3:
+                    _score += 500;
+                    break;
+
+                case 4:
+                    _score += 800;
+                    break;
+            }
 
             CreateMino();
         }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using static TetAIDotNET.GeneticAlgorithm;
 
 namespace TetAIDotNET
 {
@@ -11,79 +12,91 @@ namespace TetAIDotNET
     {
         static void Main(string[] args)
         {
-            var environment = new Environment();
+            Console.WriteLine("モードを入力してください");
+            Console.WriteLine("1.テスト");
+            Console.WriteLine("2.学習");
+            Console.WriteLine("3.手動");
+            var key = Console.ReadKey().Key;
+            Environment environment = new Environment();
             environment.Init();
+            Evaluation.Weight = new float[] { -612.4642f, 774.6885f, -225.312f, -557.3145f, -735.2709f, -911.1161f, -100.9422f };
 
-                Console.WriteLine("開始には何かキーを入力してください...");
-                Console.ReadKey();
-       
-            while (true)
+            if (key == ConsoleKey.D1)
             {
-            REINPUT:;
-                var result = environment.Search();
-
-                foreach (var action in result.Actions)
+                while (true)
                 {
-                    if(action==Action.Null)
-                        break;
-                    environment.UserInput(action);
-                    Thread.Sleep(30);
-                environment.PrintGame();
+                    var result = environment.Search();
+
+                    foreach (var action in result.Actions)
+                    {
+                        if (action == Action.Null)
+                            break;
+                        environment.UserInput(action);
+                        Thread.Sleep(50);
+                        environment.PrintGame();
+                    }
+
                 }
-
-
-           //     Console.ReadKey();
-                /*
-               var input = Console.ReadKey().Key;
-
-            switch (input)
-                {
-                    case ConsoleKey.RightArrow:
-                        environment.UserInput(Action.MoveRight);
-                        break;
-
-                    case ConsoleKey.LeftArrow:
-                        environment.UserInput(Action.MoveLeft);
-                        break;
-
-                    case ConsoleKey.UpArrow:
-                        environment.UserInput(Action.Harddrop);
-                        break;
-
-                    case ConsoleKey.DownArrow:
-                        environment.UserInput(Action.Softdrop);
-                        break;
-
-                    case ConsoleKey.C:
-                        environment.UserInput(Action.Hold);
-                        break;
-                    case ConsoleKey.X:
-                        environment.UserInput(Action.RotateRight);
-                        break;
-                    case ConsoleKey.Z:
-                        environment.UserInput(Action.RotateLeft);
-                        break;
-
-                    case ConsoleKey.R:
-                        environment.Init();
-                        break;
-                    default:
-                        goto REINPUT;
-
-                }*/
-             
-
             }
+            else if (key == ConsoleKey.D2)
+            {
+                Learning();
+            }
+            else if (key == ConsoleKey.D3)
+            {
+                while (true)
+                {
+                REINPUT:;
+                    //     Console.ReadKey();
+
+                    environment.PrintGame();
+                    var input = Console.ReadKey().Key;
+
+                    switch (input)
+                    {
+                        case ConsoleKey.RightArrow:
+                            environment.UserInput(Action.MoveRight);
+                            break;
+
+                        case ConsoleKey.LeftArrow:
+                            environment.UserInput(Action.MoveLeft);
+                            break;
+
+                        case ConsoleKey.UpArrow:
+                            environment.UserInput(Action.Harddrop);
+                            break;
+
+                        case ConsoleKey.DownArrow:
+                            environment.UserInput(Action.Softdrop);
+                            break;
+
+                        case ConsoleKey.C:
+                            environment.UserInput(Action.Hold);
+                            break;
+                        case ConsoleKey.X:
+                            environment.UserInput(Action.RotateRight);
+                            break;
+                        case ConsoleKey.Z:
+                            environment.UserInput(Action.RotateLeft);
+                            break;
+
+                        case ConsoleKey.R:
+                            environment.Init();
+                            break;
+                        default:
+                            goto REINPUT;
+
+                    }
+
+
+                }
+            }
+
 
 
             var mino = new Mino(MinoKind.Z, Rotation.Zero, new Vector2[] { new Vector2(0, 2), new Vector2(1, 2), new Vector2(1, 1), new Vector2(2, 1) });
             var field = new int[3, 3];
 
-            while (true)
-            {
-                Test(field, mino);
-                Environment.SimpleRotate(Rotate.Left, ref mino);
-            }
         }
 
         static void Test(int[,] field, Mino mino)

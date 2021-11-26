@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static TetAIDotNET.GeneticAlgorithm;
 
 namespace TetAIDotNET
 {
@@ -31,6 +32,21 @@ namespace TetAIDotNET
                 return 1;
             if (xcount > ycount)
                 return -1;
+
+            return 0;
+        }
+
+
+    }
+
+    class ISortIndivisual : IComparer<Indivisual>
+    {
+        int IComparer<Indivisual>.Compare(Indivisual x, Indivisual y)
+        {
+            if (x.Evaluation > y.Evaluation)
+                return -1;
+            else if (x.Evaluation < y.Evaluation)
+                return 1;
 
             return 0;
         }

@@ -29,7 +29,7 @@ namespace TetAIDotNET
             var set = new Dictionary<int, Way>();
             var actions = new Action[20];
 
-            SearchTreeDeep(set, field, current, 0, new Action[20], new Dictionary<int, int>(), 0);
+            SearchTreeDeep(set, field, current, 0, new Action[30], new Dictionary<int, int>(), 0);
 
 
             var testways = set.Values.ToArray();
@@ -163,7 +163,7 @@ namespace TetAIDotNET
                 //array[actionCount] = Action.Softdrop;
 
 
-                SearchTreeDeep(set, field, mino, actionCount + 1, array, pastway, 0, true, historyLeft);
+                SearchTreeDeep(set, field, mino, actionCount + 1, array, pastway, rotateCount, true, historyLeft);
 
 
             }
@@ -181,7 +181,7 @@ namespace TetAIDotNET
                 var array = actions.CloneArray();
                 array[actionCount] = Action.MoveLeft;
 
-                SearchTreeDeep(set, field, mino, actionCount + 1, array, pastway, 0, historyRight, true);
+                SearchTreeDeep(set, field, mino, actionCount + 1, array, pastway, rotateCount, historyRight, true);
 
 
             }
