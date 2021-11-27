@@ -40,6 +40,7 @@ namespace TetAIDotNET
                     break;
             }
 
+            int smallest = 50;
             for (int x = 0; x < Environment.FIELD_WIDTH; x++)
             {
                 var flag = true;
@@ -47,15 +48,22 @@ namespace TetAIDotNET
                 {
                     if (newfield[x, y] == 1)
                     {
+                        if (smallest > y)
+                            smallest = y;
                         rowheight[x] = y;
                         flag = false;
                         break;
                     }
                 }
                 if (flag)
-                    rowheight[x] = 0;
+                {
+                    smallest = -1;
+                    rowheight[x] = -1;
+                }
 
             }
+            List<int> heightswithoutido = new List<int>(rowheight);
+            heightswithoutido.Remove(smallest);
 
             int sumofheight = rowheight.Sum();
 
@@ -71,9 +79,9 @@ namespace TetAIDotNET
             }
 
             int bump = 0;
-            for (int i = 0; i < rowheight.Length - 1; i++)
+            for (int i = 0; i < heightswithoutido.Count - 1; i++)
             {
-                bump += Math.Abs(rowheight[i] - rowheight[i + 1]);
+                bump += Math.Abs(heightswithoutido[i] - heightswithoutido[i + 1]);
             }
             /*
             for (int y = Environment.FIELD_HEIGHT - 1; y >= 0; y--)

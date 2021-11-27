@@ -328,7 +328,7 @@ namespace TetAIDotNET
 
         public Way Search()
         {
-            return DefaultSearch.Search(field, _nowMino, _next);
+            return DefaultSearch.Search(field, _nowMino, _next,_canHold,_nowHold);
         }
 
         public void PrintGame()
@@ -428,7 +428,7 @@ namespace TetAIDotNET
                     environment.UserInput(action);
                 }
 
-                if (environment._dead || environment._clearedLine == 150)
+                if (environment._dead || environment._clearedLine >= 150)
                 {
                     return environment._score;
                 }

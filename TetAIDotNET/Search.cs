@@ -24,21 +24,70 @@ namespace TetAIDotNET
             public int ActionCount;
         }
 
-        static public Way Search(int[,] field, Mino current, MinoKind[] nexts)
+        static public Way Search(int[,] field, Mino current, MinoKind[] nexts, bool canhold, MinoKind? hold)
         {
             var set = new Dictionary<int, Way>();
+            var sethold = new Dictionary<int, Way>();
             var actions = new Action[20];
 
             SearchTreeDeep(set, field, current, 0, new Action[30], new Dictionary<int, int>(), 0);
+            Task task = null;
+            if (canhold)
+            {
+                task = Task.Run(() =>
+                  {
+                      var newnext = (MinoKind[])nexts.Clone();
+
+                      if (hold == null)
+                      {
+                          var mino = newnext[0];
+
+                          for (int i = 0; i < newnext.Length - 1; i++)
+                              newnext[i] = newnext[i + 1];
+                          newnext[newnext.Length - 1] = MinoKind.Null;
+                          SearchTreeDeep(sethold, field, Environment.CreateMino(mino), 0, new Action[30], new Dictionary<int, int>(), 0);
 
 
-            var testways = set.Values.ToArray();
-            Array.Sort(testways, ISortWay.GetInstance());
+                      }
+                      else
+                      {
+                          SearchTreeDeep(sethold, field, Environment.CreateMino((MinoKind)hold), 0, new Action[30], new Dictionary<int, int>(), 0);
 
-            return testways[testways.Length - 1];
+                      }
+
+                  });
+            }
+            if (task != null)
+                task.Wait();
+
+            var test1 = set.Values.ToArray();
+            var test2 = sethold.Values.ToArray();
+            Array.Sort(test1, ISortWay.GetInstance());
+            Array.Sort(test2, ISortWay.GetInstance());
+
+            Way result;
+
+            if (sethold.Count != 0)
+            {
+                if (test1[test1.Length - 1].Evaluation > test2[test2.Length - 1].Evaluation)
+                    result = test1[test1.Length - 1];
+                else
+                {
+                    result = test2[test2.Length - 1];
+
+                    for (int i = 0; i < result.Actions.Length - 1; i++)
+                        result.Actions[i] = Action.Null;
+
+                    result.Actions[0] = Action.Hold;
+                }
+            }
+            else
+                result = test1[test1.Length - 1];
+
+            return result;
         }
 
-        static public void SearchTree(int[,] field, Mino current, MinoKind[] nexts)
+        static void SearchTree(int[,] field, Mino current, MinoKind[] nexts)
         {
             var set = new Dictionary<int, Way>();
             var actions = new Action[20];
