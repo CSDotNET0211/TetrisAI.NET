@@ -96,7 +96,7 @@ namespace TetAIDotNET
 
             for (int i = 0; i < learningnum; i++)
             {
-                var param = new float[7];
+                var param = new float[9];
                 for (int j = 0; j < param.Length; j++)
                 {
                     param[j] = GetRandom(randommin, randommax, random);
@@ -151,10 +151,10 @@ namespace TetAIDotNET
                 indivisuals.RemoveAt(index1);
                 indivisuals.RemoveAt(index2);
 
-               /* for (int i = 0; i < indivisuals.Count; i++)
+                for (int i = 0; i < indivisuals.Count; i++)
                 {
-                    indivisuals[i].Evaluation = Function(indivisuals[i].Values);
-                }*/
+                    indivisuals[i].Evaluation = Environment.GetEval(indivisuals[i].Values);
+                }
             }
         }
 

@@ -19,7 +19,7 @@ namespace TetAIDotNET
             var key = Console.ReadKey().Key;
             Environment environment = new Environment();
             environment.Init();
-            Evaluation.Weight = new float[] { 14.08399f, -280.3021f, 1789.351f, 1745.672f, 2035.513f, -2058.014f, -37.32625f };
+            Evaluation.Weight = new float[] { -0.28932f, -20.3678f, -12.60971f, -17.53663f, -9.156619f, -72.93766f, 56.74286f, -6.684973f, -6.536374f, };
 
             if (key == ConsoleKey.D1)
             {
