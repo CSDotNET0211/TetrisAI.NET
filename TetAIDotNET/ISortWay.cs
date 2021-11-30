@@ -51,4 +51,9 @@ namespace TetAIDotNET
             return 0;
         }
     }
+
+    class ISortVector2Y
+    {
+
+    }
 }

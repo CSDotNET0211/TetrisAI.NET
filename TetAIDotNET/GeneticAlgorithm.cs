@@ -80,6 +80,16 @@ namespace TetAIDotNET
         static public void Learning()
         {
             Console.WriteLine("学習を開始");
+            Console.WriteLine("学習データを読み込みますか？");
+            Console.WriteLine("1:はい\n2:いいえ");
+
+            var result = Console.ReadKey().Key;
+            if (result == ConsoleKey.D1)
+            {
+                Console.Write("読み込む学習データのパスを入力:");
+                var path=Console.ReadLine();
+            }
+
             Console.Write("集団の個体数を入力:");
             int learningnum = int.Parse(Console.ReadLine());
             Console.Write("子供の個体数を入力:");
@@ -96,7 +106,7 @@ namespace TetAIDotNET
 
             for (int i = 0; i < learningnum; i++)
             {
-                var param = new float[9];
+                var param = new float[15];
                 for (int j = 0; j < param.Length; j++)
                 {
                     param[j] = GetRandom(randommin, randommax, random);
@@ -140,7 +150,7 @@ namespace TetAIDotNET
                 for (int i = 0; i < childnum; i++)
                 {
                     childs.Add(BLXAlphaCrossOver(indivisuals[index1], indivisuals[index2], 0.7f));
-                    childs[childs.Count - 1].Evaluation = Environment.GetEval(childs[childs.Count-1].Values);
+                    childs[childs.Count - 1].Evaluation = Environment.GetEval(childs[childs.Count - 1].Values);
                 }
 
                 AllAddList.AddRange(childs);
@@ -150,6 +160,7 @@ namespace TetAIDotNET
                 indivisuals.Add(TournamentChoise(AllAddList.ToArray(), 2));
                 indivisuals.RemoveAt(index1);
                 indivisuals.RemoveAt(index2);
+
 
                 for (int i = 0; i < indivisuals.Count; i++)
                 {
