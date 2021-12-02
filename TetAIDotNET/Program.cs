@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -12,6 +14,10 @@ namespace TetAIDotNET
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("TetrisAI.NET");
+            int worker, io;
+            ThreadPool.GetMaxThreads(out worker, out io);
+            Console.WriteLine($"MAXThread Worker:{worker},IO:{io}\n");
             Console.WriteLine("モードを入力してください");
             Console.WriteLine("1.テスト");
             Console.WriteLine("2.学習");
@@ -19,7 +25,7 @@ namespace TetAIDotNET
             var key = Console.ReadKey().Key;
             Environment environment = new Environment();
             environment.Init();
-            Evaluation.Weight = new float[] { 0.2890262f, - 19.73375f, - 31.28189f, - 12.06249f, 32.33967f, - 45.3013f, - 2.729009f, - 47.00863f, - 0.1363466f, - 0.7741607f, - 10.14647f, - 23.20074f, 5.343863f, - 56.77925f, 3.595039f, };
+            Evaluation.Weight = new float[] { 0.2890262f, -19.73375f, -31.28189f, -12.06249f, 32.33967f, -45.3013f, -2.729009f, -47.00863f, -0.1363466f, -0.7741607f, -10.14647f, -23.20074f, 5.343863f, -56.77925f, 3.595039f, };
 
             if (key == ConsoleKey.D1)
             {

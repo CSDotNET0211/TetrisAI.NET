@@ -12,6 +12,8 @@ namespace TetAIDotNET
     /// </summary>
     class DefaultSearch
     {
+        static ISortWay _sortwayInstance = new ISortWay();
+
         struct TreeHistory
         {
             public TreeHistory(Vector2 pos, int actioncount)
@@ -87,13 +89,27 @@ namespace TetAIDotNET
             return result;
         }
 
-        static void SearchTree(int[,] field, Mino current, MinoKind[] nexts)
+        /// <summary>
+        /// 非同期でビームサーチを続ける
+        /// </summary>
+        /// <param name="best"></param>
+        /// <param name="field"></param>
+        /// <param name="current"></param>
+        /// <param name="nexts"></param>
+        /// <param name="eval"></param>
+        static void SearchTree(ref Way? best, int[,] field, Mino current, MinoKind[] nexts, float eval)
         {
             var set = new Dictionary<int, Way>();
             var actions = new Action[20];
 
+            //ふつうに検索
             SearchTreeDeep(set, field, current, 0, new Action[20], new Dictionary<int, int>(), 0);
 
+            //ソート
+            var testways = set.Values.ToArray();
+            Array.Sort(testways, _sortwayInstance);
+
+            //ネクスト更新
             var newnext = (MinoKind[])nexts.Clone();
             if (newnext[0] != MinoKind.Null)
             {
@@ -102,19 +118,27 @@ namespace TetAIDotNET
                     newnext[i] = newnext[i + 1];
             }
             else
+            {
+                if (best == null ||
+                    testways[testways.Length - 1].Evaluation > ((Way)best).Evaluation)
+                {
+                    best = testways[testways.Length - 1];
+                }
+
                 return;
+            }
 
 
-            var testways = set.Values.ToArray();
-            Array.Sort(testways, ISortWay.GetInstance());
-
-
+            //ビームサーチ準備
+            //foreach用に抜き出す
             var nextgen = new Way[20];
             for (int i = 0; i < nextgen.Length; i++)
             {
                 nextgen[i] = testways[testways.Length - 1 - i];
+                nextgen[i].Evaluation += eval * 0.6f;
             }
 
+            //ビームサーチ　ビーム幅20
             foreach (var way in nextgen)
             {
                 var newfield = field.CloneArray();
@@ -123,8 +147,9 @@ namespace TetAIDotNET
                     newfield[pos.x, pos.y] = 1;
 
                 //ライン消去
+                Environment.CheckClearedLine(newfield);
 
-                SearchTree(newfield, current, newnext);
+                SearchTree(ref best, newfield, current, newnext, way.Evaluation);
 
             }
         }
