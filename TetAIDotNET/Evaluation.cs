@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,18 +9,18 @@ namespace TetAIDotNET
 {
     class Evaluation
     {
-        static int[,] newfield = new int[Environment.FIELD_WIDTH, Environment.FIELD_HEIGHT];
+        static BitArray newfield = new BitArray(Environment.FIELD_WIDTH * Environment.FIELD_HEIGHT);
         static int[] rowheight = new int[Environment.FIELD_WIDTH];
         static public float[] Weight = new float[15];
 
-        public static float Evaluate(int[,] field, Mino mino)
+        public static float Evaluate(BitArray field, Mino mino)
         {
-            newfield = field.CloneArray();
+            newfield = (BitArray)field.Clone();
 
 
             foreach (var pos in mino.Positions)
             {
-                newfield[pos.x, pos.y] = 1;
+                newfield.Set(pos.x + pos.y * 10, true);
             }
 
             var cleared = Environment.CheckClearedLine(newfield);
@@ -46,7 +47,7 @@ namespace TetAIDotNET
                 var flag = true;
                 for (int y = Environment.FIELD_HEIGHT - 1; y >= 0; y--)
                 {
-                    if (newfield[x, y] == 1)
+                    if (newfield.Get(x + y * 10))
                     {
                         if (smallest > y)
                             smallest = y;
@@ -76,8 +77,8 @@ namespace TetAIDotNET
             {
                 for (int x = 0; x < Environment.FIELD_WIDTH; x++)
                 {
-                    if (newfield[x, y] == 1 &&
-                        newfield[x, y - 1] == 0)
+                    if (newfield.Get(x + y * 10) &&
+                     !newfield.Get(x + (y - 1) * 10))
                     {
                         if (holecount < 3)
                         {
@@ -85,7 +86,7 @@ namespace TetAIDotNET
                             while (true)
                             {
                                 if (testy + y < Environment.FIELD_HEIGHT &&
-                                    newfield[x, y + testy] == 1)
+                                    newfield.Get(x + (y + testy) * 10))
                                 {
                                     testy++;
                                     holeEval[holecount]++;
@@ -112,7 +113,7 @@ namespace TetAIDotNET
 
 
             return (Weight[0] * sumofheight) +
-                clearedValue + 
+                clearedValue +
                 (Weight[5] * holecount) +
                 (Weight[6] * bump) +
                 (Weight[7] * holecount * holecount) +

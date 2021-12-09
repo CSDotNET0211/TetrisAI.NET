@@ -29,10 +29,18 @@ namespace TetAIDotNET
 
             if (key == ConsoleKey.D1)
             {
+                       Stopwatch stopwatch=new Stopwatch();
                 while (true)
                 {
                     var result = environment.Search();
+                    /*       stopwatch.Restart();
 
+                         stopwatch.Stop();
+                          Console.WriteLine("経過時間:"+stopwatch.Elapsed);
+                        Console.ReadLine();
+                        Console.Clear();*/
+
+                    stopwatch.Restart();
                     foreach (var action in result.Actions)
                     {
                         if (action == Action.Null)
@@ -41,7 +49,9 @@ namespace TetAIDotNET
                         Thread.Sleep(50);
                         environment.PrintGame();
                     }
-
+                    stopwatch.Stop();
+                    Console.WriteLine("経過時間:" + stopwatch.Elapsed);
+                    Console.ReadKey();
                 }
             }
             else if (key == ConsoleKey.D2)

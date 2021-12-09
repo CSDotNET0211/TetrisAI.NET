@@ -8,7 +8,7 @@ namespace TetAIDotNET
 {
 
 
-    public enum Action
+    public enum Action:byte
     {
         Null,
         MoveRight,

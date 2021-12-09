@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,29 @@ namespace TetAIDotNET
     /// </summary>
     class DefaultSearch
     {
+        const int MAX_NEXT = 5;
         static ISortWay _sortwayInstance = new ISortWay();
+        static Dictionary<BitArray, Way[]> TreeData = new Dictionary<BitArray, Way[]>();
+        //ネクストの数
+        static Dictionary<BitArray, Way>[] Data = new Dictionary<BitArray, Way>[MAX_NEXT];
+        static Dictionary<Tree, Way[]> TreeStructure = new Dictionary<Tree, Way[]>();
+        static Tree RootTree;
+        static Way best = null;
+        //keyがIndexを表しているtet
+        struct Tree
+        {
+            public Tree(int index, int parentindex)
+            {
+                NowIndex = index;
+                ParentIndex = parentindex;
+                Childs = new List<Tree>();
+            }
+
+            public Way[] Data;
+            public int NowIndex;
+            public int ParentIndex;
+            public List<Tree> Childs;
+        }
 
         struct TreeHistory
         {
@@ -26,13 +49,15 @@ namespace TetAIDotNET
             public int ActionCount;
         }
 
-        static public Way Search(int[,] field, Mino current, MinoKind[] nexts, bool canhold, MinoKind? hold)
+        static public Way Search(BitArray field, Mino current, MinoKind[] nexts, bool canhold, MinoKind? hold)
         {
             var set = new Dictionary<int, Way>();
             var sethold = new Dictionary<int, Way>();
             var actions = new Action[20];
 
             SearchTreeDeep(set, field, current, 0, new Action[30], new Dictionary<int, int>(), 0);
+            Console.WriteLine("検索量:" + set.Count);
+
             Task task = null;
             if (canhold)
             {
@@ -48,13 +73,13 @@ namespace TetAIDotNET
                               newnext[i] = newnext[i + 1];
                           newnext[newnext.Length - 1] = MinoKind.Null;
                           SearchTreeDeep(sethold, field, Environment.CreateMino(mino), 0, new Action[30], new Dictionary<int, int>(), 0);
-
+                          Console.WriteLine("検索量:" + sethold.Count);
 
                       }
                       else
                       {
                           SearchTreeDeep(sethold, field, Environment.CreateMino((MinoKind)hold), 0, new Action[30], new Dictionary<int, int>(), 0);
-
+                          Console.WriteLine("検索量:" + sethold.Count);
                       }
 
                   });
@@ -89,6 +114,30 @@ namespace TetAIDotNET
             return result;
         }
 
+        static public Way GetBestWay()
+        {
+            //現在の地形から一覧を取得
+            //１つももしなかったら予期せぬ地形変化、再探索
+            //
+
+
+        }
+
+        static private void GetBest(Tree tree, float[] selectnextValues, int index)
+        {
+            //ネクストがそろってないから修正したほうがいいかも
+            if (tree.Childs.Count == 0)
+
+                foreach (var data in tree.Childs)
+                {
+                    var clone = (float[])selectnextValues.Clone();
+                    clone[index] = index;
+                    GetBest(data, clone, index + 1);
+
+
+                }
+        }
+
         /// <summary>
         /// 非同期でビームサーチを続ける
         /// </summary>
@@ -97,7 +146,7 @@ namespace TetAIDotNET
         /// <param name="current"></param>
         /// <param name="nexts"></param>
         /// <param name="eval"></param>
-        static void SearchTree(ref Way? best, int[,] field, Mino current, MinoKind[] nexts, float eval)
+        static void SearchTree(ref Way? best, BitArray field, Mino current, MinoKind[] nexts, float eval)
         {
             var set = new Dictionary<int, Way>();
             var actions = new Action[20];
@@ -108,6 +157,9 @@ namespace TetAIDotNET
             //ソート
             var testways = set.Values.ToArray();
             Array.Sort(testways, _sortwayInstance);
+
+            if (!TreeData.ContainsKey(field))
+                TreeData.Add(field, testways);
 
             //ネクスト更新
             var newnext = (MinoKind[])nexts.Clone();
@@ -131,20 +183,20 @@ namespace TetAIDotNET
 
             //ビームサーチ準備
             //foreach用に抜き出す
-            var nextgen = new Way[20];
+            var nextgen = new Way[10];
             for (int i = 0; i < nextgen.Length; i++)
             {
                 nextgen[i] = testways[testways.Length - 1 - i];
                 nextgen[i].Evaluation += eval * 0.6f;
             }
 
-            //ビームサーチ　ビーム幅20
+            //ビームサーチ　ビーム幅
             foreach (var way in nextgen)
             {
-                var newfield = field.CloneArray();
+                var newfield = (BitArray)field.Clone();
 
                 foreach (var pos in way.ResultPos)
-                    newfield[pos.x, pos.y] = 1;
+                    newfield.Set(pos.x + pos.y * 10, true);
 
                 //ライン消去
                 Environment.CheckClearedLine(newfield);
@@ -154,7 +206,7 @@ namespace TetAIDotNET
             }
         }
 
-        static private void SearchTreeDeep(Dictionary<int, Way> set, int[,] field, Mino current, int actionCount, Action[] actions, Dictionary<int, int> pastway, int rotateCount, bool historyRight = false, bool historyLeft = false)
+        static private void SearchTreeDeep(Dictionary<int, Way> set, BitArray field, Mino current, int actionCount, Action[] actions, Dictionary<int, int> pastway, int rotateCount, bool historyRight = false, bool historyLeft = false)
         {
             if (HistoryContains(pastway, current, actionCount))
             {

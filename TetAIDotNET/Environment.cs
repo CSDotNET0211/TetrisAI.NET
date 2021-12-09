@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -44,7 +45,7 @@ namespace TetAIDotNET
 
     }
 
-    public enum MinoKind
+    public enum MinoKind:byte
     {
         S,
         Z,
@@ -82,7 +83,7 @@ namespace TetAIDotNET
 
     }
 
-    public enum Rotate
+    public enum Rotate:byte
     {
         Right,
         Left
@@ -100,7 +101,7 @@ namespace TetAIDotNET
         Mino _nowMino;
         MinoKind[] _next = new MinoKind[5];
         Random _random = new Random();
-        int[,] field = new int[FIELD_WIDTH, FIELD_HEIGHT];
+        BitArray field = new BitArray(FIELD_WIDTH * FIELD_HEIGHT);
         bool _canHold = true;
         MinoKind? _nowHold = null;
 
@@ -189,7 +190,7 @@ namespace TetAIDotNET
 
             foreach (var test in _nowMino.Positions)
             {
-                if (field[test.x, test.y] == 1)
+                if (field.Get(test.x + test.y * 10))
                 {
                     _dead = true;
                     break;
@@ -469,7 +470,7 @@ namespace TetAIDotNET
                 RefreshNext(_next);
             }
 
-            field.InitWith0(FIELD_WIDTH, FIELD_HEIGHT);
+            field.SetAll(false);
 
             CreateMino();
         }
@@ -490,7 +491,7 @@ namespace TetAIDotNET
 
             foreach (Vector2 pos in _nowMino.Positions)
             {
-                field[pos.x, pos.y] = 1;
+                field.Set(pos.x + pos.y * 10, true);
             }
 
             _score += 2;
@@ -518,7 +519,7 @@ namespace TetAIDotNET
             CreateMino();
         }
 
-        static public int CheckClearedLine(int[,] field)
+        static public int CheckClearedLine(BitArray field)
         {
             List<int> list = new List<int>();
             bool flag = true;
@@ -528,7 +529,7 @@ namespace TetAIDotNET
                 flag = true;
                 for (int x = 0; x < FIELD_WIDTH; x++)
                 {
-                    if (field[x, y] == 0)
+                    if (!field.Get(x + y * 10))
                     {
                         flag = false;
                         break;
@@ -546,16 +547,16 @@ namespace TetAIDotNET
 
             return list.Count;
         }
-        static private void DownLine(int value, int[,] field)
+        static private void DownLine(int value, BitArray field)
         {
             for (int y = value; y < FIELD_HEIGHT; y++)
             {
                 for (int x = 0; x < FIELD_WIDTH; x++)
                 {
                     if (y == FIELD_HEIGHT - 1)
-                        field[x, y] = 0;
+                        field.Set(x + y * 10, false);
                     else
-                        field[x, y] = field[x, y + 1];
+                        field.Set(x + y * 10, field.Get(x + (y + 1) * 10));
                 }
             }
         }
@@ -575,14 +576,14 @@ namespace TetAIDotNET
             next[next.Length - 1] = mino;
 
         }
-        static public bool CheckValidPos(int[,] field, Mino mino, Vector2 trymove)
+        static public bool CheckValidPos(BitArray field, Mino mino, Vector2 trymove)
         {
             foreach (var pos in mino.Positions)
             {
                 if (pos.x + trymove.x < FIELD_WIDTH &&
                    pos.x + trymove.x >= 0 &&
                    pos.y + trymove.y >= 0 &&
-                   field[pos.x + trymove.x, pos.y + trymove.y] == 0)
+                   !field.Get((pos.x + trymove.x) + (pos.y + trymove.y) * 10))
                 {
 
                 }
@@ -595,7 +596,7 @@ namespace TetAIDotNET
             return true;
         }
 
-        static public bool TryRotate(Rotate rotate, int[,] field, ref Mino current, out Vector2? srspos)
+        static public bool TryRotate(Rotate rotate, BitArray field, ref Mino current, out Vector2? srspos)
         {
             srspos = null;
 
