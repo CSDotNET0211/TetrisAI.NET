@@ -121,16 +121,6 @@ namespace TetAIDotNET
             return result;
         }
 
-        static public Way GetBestWay()
-        {
-            return new Way();
-            //現在の地形から一覧を取得
-            //１つももしなかったら予期せぬ地形変化、再探索
-            //
-
-
-        }
-
         static private void GetBest(Tree tree, float[] selectindexes, int nextlevel, float sumofvalue)
         {
             //ネクストがそろってないから修正したほうがいいかも

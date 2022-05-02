@@ -16,7 +16,6 @@ namespace TetAIDotNET
             newmino.AbsolutelyPosition = mino.AbsolutelyPosition;
             newmino.Positions = new Vector2[4];
             Array.Copy(mino.Positions, newmino.Positions, mino.Positions.Length);
-            //     Buffer.BlockCopy(mino.Positions, 0, newmino.Positions, 0, mino.Positions.Length);
             return newmino;
         }
 
@@ -48,7 +47,6 @@ namespace TetAIDotNET
         {
             var array2 = new int[Environment.FIELD_WIDTH, Environment.FIELD_HEIGHT];
             Array.Copy(array, array2, array.Length);
-            //  Buffer.BlockCopy(array, 0, array2, 0, array.Length);
             return array2;
         }
 

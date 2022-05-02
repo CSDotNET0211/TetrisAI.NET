@@ -135,7 +135,6 @@ namespace TetAIDotNET
                 Console.Write("\n");
             }
 
-            //            Console.ReadKey();
             Thread.Sleep(300);
         }
     }

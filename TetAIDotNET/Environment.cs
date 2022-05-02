@@ -45,7 +45,7 @@ namespace TetAIDotNET
 
     }
 
-    public enum MinoKind:byte
+    public enum MinoKind : byte
     {
         S,
         Z,
@@ -83,26 +83,58 @@ namespace TetAIDotNET
 
     }
 
-    public enum Rotate:byte
+    public enum Rotate : byte
     {
         Right,
         Left
     }
 
-
-    class Environment
+    /// <summary>
+    /// テトリスの仮想環境関連 
+    /// </summary>
+    partial class Environment
     {
-        MinoKind[] bagArray = new MinoKind[] { MinoKind.I, MinoKind.J, MinoKind.L, MinoKind.O, MinoKind.S, MinoKind.T, MinoKind.Z };
-        List<MinoKind> _bag;
+        /// <summary>
+        /// 7種1順用読み込みバッグ
+        /// </summary>
+        readonly MinoKind[] bagArray = new MinoKind[] { MinoKind.I, MinoKind.J, MinoKind.L, MinoKind.O, MinoKind.S, MinoKind.T, MinoKind.Z };
+        /// <summary>
+        /// 7種1順バッグ
+        /// </summary>
+        List<MinoKind> _nextBag;
+        /// <summary>
+        /// 消去したライン
+        /// </summary>
         public int _clearedLine = 0;
+        /// <summary>
+        /// スコア
+        /// </summary>
         public int _score = 0;
+        /// <summary>
+        /// 死亡判定
+        /// </summary>
         public bool _dead = false;
 
+        /// <summary>
+        /// 現在操作中ミノ情報
+        /// </summary>
         Mino _nowMino;
+        /// <summary>
+        /// ネクスト
+        /// </summary>
         MinoKind[] _next = new MinoKind[5];
         Random _random = new Random();
+        /// <summary>
+        /// フィールドデータ
+        /// </summary>
         BitArray field = new BitArray(FIELD_WIDTH * FIELD_HEIGHT);
+        /// <summary>
+        /// ホールドフラグ
+        /// </summary>
         bool _canHold = true;
+        /// <summary>
+        /// ホールドデータ
+        /// </summary>
         MinoKind? _nowHold = null;
 
         #region RotateTable
@@ -256,77 +288,6 @@ namespace TetAIDotNET
                 return array;
             }
         }
-
-        static public Mino CreateMino(MinoKind mino1)
-        {
-            var mino = new Mino();
-            mino.Rotation = Rotation.Zero;
-            mino.MinoKind = mino1;
-            mino.Positions = GetDefaultMinoPos(mino1);
-            mino.AbsolutelyPosition = new Vector2(50, 50);
-
-            return mino;
-            Vector2[] GetDefaultMinoPos(MinoKind kind)
-            {
-                var array = new Vector2[4];
-                switch (kind)
-                {
-                    case MinoKind.I:
-                        array[0] = new Vector2(3, 18);
-                        array[1] = new Vector2(4, 18);
-                        array[2] = new Vector2(5, 18);
-                        array[3] = new Vector2(6, 18);
-                        break;
-
-                    case MinoKind.J:
-                        array[0] = new Vector2(3, 19);
-                        array[1] = new Vector2(3, 18);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
-
-                    case MinoKind.L:
-                        array[0] = new Vector2(5, 19);
-                        array[1] = new Vector2(3, 18);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
-
-                    case MinoKind.O:
-                        array[0] = new Vector2(4, 19);
-                        array[1] = new Vector2(5, 19);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
-
-                    case MinoKind.S:
-                        array[0] = new Vector2(4, 19);
-                        array[1] = new Vector2(5, 19);
-                        array[2] = new Vector2(3, 18);
-                        array[3] = new Vector2(4, 18);
-                        break;
-                    case MinoKind.Z:
-                        array[0] = new Vector2(3, 19);
-                        array[1] = new Vector2(4, 19);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
-                    case MinoKind.T:
-                        array[0] = new Vector2(4, 19);
-                        array[1] = new Vector2(3, 18);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
-
-                    default:
-                        throw new Exception();
-                }
-
-                return array;
-            }
-        }
-
-
         public Way Search()
         {
             return DefaultSearch.Search(field, _nowMino, _next, _canHold, _nowHold);
@@ -337,7 +298,6 @@ namespace TetAIDotNET
             Print.PrintGame(field, _nowMino.Positions, _next, _nowHold);
             Print.PrintGame(field, _nowMino.Positions, _next, _nowHold);
         }
-
         public void UserInput(Action action)
         {
             Vector2? srs;
@@ -411,35 +371,6 @@ namespace TetAIDotNET
                     break;
             }
         }
-
-        static public float GetEval(float[] values)
-        {
-            //操作終わった後、150ライン消しか死ぬまで
-            //設置も１ポイント
-            Environment environment = new Environment();
-            environment.Init();
-            Evaluation.Weight = values;
-
-            while (true)
-            {
-                var result = environment.Search();
-                foreach (var action in result.Actions)
-                {
-                    if (action == Action.Null)
-                        break;
-                    environment.UserInput(action);
-                }
-
-                if (environment._dead || environment._clearedLine >= 150)
-                {
-                    return environment._score;
-                }
-
-            }
-
-
-        }
-
         private void Hold()
         {
             if (_canHold)
@@ -460,10 +391,9 @@ namespace TetAIDotNET
 
             }
         }
-
         public void Init()
         {
-            _bag = new List<MinoKind>(bagArray);
+            _nextBag = new List<MinoKind>(bagArray);
 
             for (int i = 0; i < _next.Length; i++)
             {
@@ -474,7 +404,6 @@ namespace TetAIDotNET
 
             CreateMino();
         }
-
         private void SetMino()
         {
             while (true)
@@ -518,7 +447,49 @@ namespace TetAIDotNET
 
             CreateMino();
         }
+        public void RefreshNext(MinoKind[] next)
+        {
+            for (int i = 0; i < next.Length - 1; i++)
+                next[i] = next[i + 1];
 
+            if (_nextBag.Count == 0)
+                _nextBag = new List<MinoKind>(bagArray);
+
+            var index = _random.Next(0, _nextBag.Count);
+            var mino = _nextBag[index];
+            _nextBag.RemoveAt(index);
+
+            next[next.Length - 1] = mino;
+
+        }
+
+
+    }
+
+    /// <summary>
+    /// static関連
+    /// </summary>
+    partial class Environment
+    {
+        static public bool CheckValidPos(BitArray field, Mino mino, Vector2 trymove)
+        {
+            foreach (var pos in mino.Positions)
+            {
+                if (pos.x + trymove.x < FIELD_WIDTH &&
+                   pos.x + trymove.x >= 0 &&
+                   pos.y + trymove.y >= 0 &&
+                   !field.Get((pos.x + trymove.x) + (pos.y + trymove.y) * 10))
+                {
+
+                }
+                else
+                    return false;
+
+            }
+
+
+            return true;
+        }
         static public int CheckClearedLine(BitArray field)
         {
             List<int> list = new List<int>();
@@ -560,42 +531,113 @@ namespace TetAIDotNET
                 }
             }
         }
-
-        public void RefreshNext(MinoKind[] next)
+        static public float GetEval(float[] values)
         {
-            for (int i = 0; i < next.Length - 1; i++)
-                next[i] = next[i + 1];
+            //操作終わった後、150ライン消しか死ぬまで
+            //設置も１ポイント
+            Environment environment = new Environment();
+            environment.Init();
+            Evaluation.Weight = values;
 
-            if (_bag.Count == 0)
-                _bag = new List<MinoKind>(bagArray);
-
-            var index = _random.Next(0, _bag.Count);
-            var mino = _bag[index];
-            _bag.RemoveAt(index);
-
-            next[next.Length - 1] = mino;
-
-        }
-        static public bool CheckValidPos(BitArray field, Mino mino, Vector2 trymove)
-        {
-            foreach (var pos in mino.Positions)
+            while (true)
             {
-                if (pos.x + trymove.x < FIELD_WIDTH &&
-                   pos.x + trymove.x >= 0 &&
-                   pos.y + trymove.y >= 0 &&
-                   !field.Get((pos.x + trymove.x) + (pos.y + trymove.y) * 10))
+                var result = environment.Search();
+                foreach (var action in result.Actions)
                 {
-
+                    if (action == Action.Null)
+                        break;
+                    environment.UserInput(action);
                 }
-                else
-                    return false;
+
+                if (environment._dead || environment._clearedLine >= 150)
+                {
+                    return environment._score;
+                }
 
             }
 
 
-            return true;
         }
+        /// <summary>
+        /// ミノの種類から位置情報を生成
+        /// </summary>
+        /// <param name="mino1"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception">対応するミノの種類が存在しなかった場合</exception>
+        static public Mino CreateMino(MinoKind mino1)
+        {
+            var mino = new Mino();
+            mino.Rotation = Rotation.Zero;
+            mino.MinoKind = mino1;
+            mino.Positions = GetDefaultMinoPos(mino1);
+            mino.AbsolutelyPosition = new Vector2(50, 50);
 
+            return mino;
+            Vector2[] GetDefaultMinoPos(MinoKind kind)
+            {
+                var array = new Vector2[4];
+                switch (kind)
+                {
+                    case MinoKind.I:
+                        array[0] = new Vector2(3, 18);
+                        array[1] = new Vector2(4, 18);
+                        array[2] = new Vector2(5, 18);
+                        array[3] = new Vector2(6, 18);
+                        break;
+
+                    case MinoKind.J:
+                        array[0] = new Vector2(3, 19);
+                        array[1] = new Vector2(3, 18);
+                        array[2] = new Vector2(4, 18);
+                        array[3] = new Vector2(5, 18);
+                        break;
+
+                    case MinoKind.L:
+                        array[0] = new Vector2(5, 19);
+                        array[1] = new Vector2(3, 18);
+                        array[2] = new Vector2(4, 18);
+                        array[3] = new Vector2(5, 18);
+                        break;
+
+                    case MinoKind.O:
+                        array[0] = new Vector2(4, 19);
+                        array[1] = new Vector2(5, 19);
+                        array[2] = new Vector2(4, 18);
+                        array[3] = new Vector2(5, 18);
+                        break;
+
+                    case MinoKind.S:
+                        array[0] = new Vector2(4, 19);
+                        array[1] = new Vector2(5, 19);
+                        array[2] = new Vector2(3, 18);
+                        array[3] = new Vector2(4, 18);
+                        break;
+                    case MinoKind.Z:
+                        array[0] = new Vector2(3, 19);
+                        array[1] = new Vector2(4, 19);
+                        array[2] = new Vector2(4, 18);
+                        array[3] = new Vector2(5, 18);
+                        break;
+                    case MinoKind.T:
+                        array[0] = new Vector2(4, 19);
+                        array[1] = new Vector2(3, 18);
+                        array[2] = new Vector2(4, 18);
+                        array[3] = new Vector2(5, 18);
+                        break;
+
+                    default:
+                        throw new Exception();
+                }
+
+                return array;
+            }
+        }
+    }
+    /// <summary>
+    /// 回転関連
+    /// </summary>
+    partial class Environment
+    {
         static public bool TryRotate(Rotate rotate, BitArray field, ref Mino current, out Vector2? srspos)
         {
             srspos = null;
@@ -677,7 +719,6 @@ namespace TetAIDotNET
 
 
         }
-
         static public void SimpleRotate(Rotate rotate, ref Mino mino)
         {
             if (rotate == Rotate.Right)
@@ -768,7 +809,7 @@ namespace TetAIDotNET
             if (invert)
             {
                 if (rotate1 == Rotate.Left)
-                    rotate1 = Rotate.Right; 
+                    rotate1 = Rotate.Right;
                 else
                     rotate1 = Rotate.Left;
 
@@ -791,4 +832,8 @@ namespace TetAIDotNET
 
 
     }
+
+
 }
+
+
