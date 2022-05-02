@@ -14,6 +14,7 @@ namespace TetAIDotNET
     {
         static void Main(string[] args)
         {
+           // MisaMinoNET.MisaMino.FindMove(,,,,,,)
             Console.WriteLine("TetrisAI.NET");
             int worker, io;
             ThreadPool.GetMaxThreads(out worker, out io);
@@ -51,7 +52,7 @@ namespace TetAIDotNET
                     }
                     stopwatch.Stop();
                     Console.WriteLine("経過時間:" + stopwatch.Elapsed);
-                    Console.ReadKey();
+                 //   Console.ReadKey();
                 }
             }
             else if (key == ConsoleKey.D2)
@@ -108,10 +109,6 @@ namespace TetAIDotNET
                 }
             }
 
-
-
-            var mino = new Mino(MinoKind.Z, Rotation.Zero, new Vector2[] { new Vector2(0, 2), new Vector2(1, 2), new Vector2(1, 1), new Vector2(2, 1) });
-            var field = new int[3, 3];
 
         }
 

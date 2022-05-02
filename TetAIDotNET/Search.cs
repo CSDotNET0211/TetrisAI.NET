@@ -19,10 +19,11 @@ namespace TetAIDotNET
         //ネクストの数
         static Dictionary<BitArray, Way>[] Data = new Dictionary<BitArray, Way>[MAX_NEXT];
         static Dictionary<Tree, Way[]> TreeStructure = new Dictionary<Tree, Way[]>();
+        static List<Tree>[] LevelTree = new List<Tree>[MAX_NEXT];
         static Tree RootTree;
-        static Way best = null;
+        static Way? best = null;
         //keyがIndexを表しているtet
-        struct Tree
+        class Tree
         {
             public Tree(int index, int parentindex)
             {
@@ -31,7 +32,7 @@ namespace TetAIDotNET
                 Childs = new List<Tree>();
             }
 
-            public Way[] Data;
+            public Way Data;
             public int NowIndex;
             public int ParentIndex;
             public List<Tree> Childs;
@@ -47,6 +48,12 @@ namespace TetAIDotNET
 
             public Vector2 Position;
             public int ActionCount;
+        }
+
+        static public void RefreshRootTree(int treeindex)
+        {
+
+
         }
 
         static public Way Search(BitArray field, Mino current, MinoKind[] nexts, bool canhold, MinoKind? hold)
@@ -116,6 +123,7 @@ namespace TetAIDotNET
 
         static public Way GetBestWay()
         {
+            return new Way();
             //現在の地形から一覧を取得
             //１つももしなかったら予期せぬ地形変化、再探索
             //
@@ -123,16 +131,15 @@ namespace TetAIDotNET
 
         }
 
-        static private void GetBest(Tree tree, float[] selectnextValues, int index)
+        static private void GetBest(Tree tree, float[] selectindexes, int nextlevel, float sumofvalue)
         {
             //ネクストがそろってないから修正したほうがいいかも
             if (tree.Childs.Count == 0)
-
                 foreach (var data in tree.Childs)
                 {
-                    var clone = (float[])selectnextValues.Clone();
-                    clone[index] = index;
-                    GetBest(data, clone, index + 1);
+                    var clone = (float[])selectindexes.Clone();
+                    clone[nextlevel] = data.NowIndex;
+                    GetBest(data, clone, nextlevel + 1, sumofvalue + data.Data.Evaluation);
 
 
                 }
@@ -171,6 +178,7 @@ namespace TetAIDotNET
             }
             else
             {
+                //更新するネクストがない
                 if (best == null ||
                     testways[testways.Length - 1].Evaluation > ((Way)best).Evaluation)
                 {

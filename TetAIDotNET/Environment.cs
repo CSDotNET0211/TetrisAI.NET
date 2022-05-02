@@ -768,7 +768,7 @@ namespace TetAIDotNET
             if (invert)
             {
                 if (rotate1 == Rotate.Left)
-                    rotate1 = Rotate.Right;
+                    rotate1 = Rotate.Right; 
                 else
                     rotate1 = Rotate.Left;
 
