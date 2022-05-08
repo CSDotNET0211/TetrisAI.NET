@@ -65,6 +65,9 @@ namespace TetAIDotNET
         Left
     }
 
+    /// <summary>
+    /// ミノの情報
+    /// </summary>
     public struct Mino
     {
 
@@ -76,11 +79,43 @@ namespace TetAIDotNET
             AbsolutelyPosition = new Vector2(50, 50);
         }
 
-        public Vector2 AbsolutelyPosition;
+        /// <summary>
+        /// ミノの位置判定用の絶対位置
+        /// </summary>
+        public Vector2 AbsolutelyPosition { get; private set; }
+        /// <summary>
+        /// ミノの種類
+        /// </summary>
         public MinoKind MinoKind;
+        /// <summary>
+        /// ミノの回転情報
+        /// </summary>
         public Rotation Rotation;
-        public Vector2[] Positions;
+        /// <summary>
+        /// ミノのそれぞれの位置
+        /// </summary>
+        public Vector2[] Positions { get; private set; }
 
+        public void Init(Vector2? AbsolutelyPosition = null, Vector2[] Positions = null)
+        {
+            if (AbsolutelyPosition == null)
+                this.AbsolutelyPosition = Vector2.zero;
+            else
+                this.AbsolutelyPosition = (Vector2)AbsolutelyPosition;
+
+             if (Positions == null)
+                this.Positions = new Vector2[4];
+            else
+                this.Positions =Positions;
+        }
+
+        public void Move(Vector2 pos)
+        {
+            for (int i = 0; i < Positions.Length; i++)
+                Positions[i] += pos;
+
+            AbsolutelyPosition += pos;
+        }
     }
 
     public enum Rotate : byte
@@ -214,8 +249,7 @@ namespace TetAIDotNET
             else
                 _nowMino.MinoKind = (MinoKind)mino;
 
-            _nowMino.Positions = GetDefaultMinoPos(_nowMino.MinoKind);
-            _nowMino.AbsolutelyPosition = new Vector2(50, 50);
+            _nowMino.Init(Vector2.zero, GetDefaultMinoPos(_nowMino.MinoKind));
 
             if (mino == null)
                 RefreshNext(_next);
@@ -569,8 +603,8 @@ namespace TetAIDotNET
             var mino = new Mino();
             mino.Rotation = Rotation.Zero;
             mino.MinoKind = mino1;
-            mino.Positions = GetDefaultMinoPos(mino1);
-            mino.AbsolutelyPosition = new Vector2(50, 50);
+
+            mino.Init(Vector2.zero, GetDefaultMinoPos(mino1));
 
             return mino;
             Vector2[] GetDefaultMinoPos(MinoKind kind)

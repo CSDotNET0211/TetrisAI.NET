@@ -10,11 +10,12 @@ using static TetAIDotNET.GeneticAlgorithm;
 
 namespace TetAIDotNET
 {
+
     class Program
     {
         static void Main(string[] args)
         {
-           // MisaMinoNET.MisaMino.FindMove(,,,,,,)
+            // MisaMinoNET.MisaMino.FindMove(,,,,,,)
             Console.WriteLine("TetrisAI.NET");
             int worker, io;
             ThreadPool.GetMaxThreads(out worker, out io);
@@ -23,6 +24,7 @@ namespace TetAIDotNET
             Console.WriteLine("1.テスト");
             Console.WriteLine("2.学習");
             Console.WriteLine("3.手動");
+
             var key = Console.ReadKey().Key;
             Environment environment = new Environment();
             environment.Init();
@@ -30,7 +32,7 @@ namespace TetAIDotNET
 
             if (key == ConsoleKey.D1)
             {
-                       Stopwatch stopwatch=new Stopwatch();
+                Stopwatch stopwatch = new Stopwatch();
                 while (true)
                 {
                     var result = environment.Search();
@@ -47,12 +49,12 @@ namespace TetAIDotNET
                         if (action == Action.Null)
                             break;
                         environment.UserInput(action);
-                        Thread.Sleep(50);
+                        Thread.Sleep(30);
                         environment.PrintGame();
                     }
                     stopwatch.Stop();
                     Console.WriteLine("経過時間:" + stopwatch.Elapsed);
-                 //   Console.ReadKey();
+                    //   Console.ReadKey();
                 }
             }
             else if (key == ConsoleKey.D2)

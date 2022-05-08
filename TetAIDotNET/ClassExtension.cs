@@ -13,8 +13,7 @@ namespace TetAIDotNET
             var newmino = new Mino();
             newmino.MinoKind = mino.MinoKind;
             newmino.Rotation = mino.Rotation;
-            newmino.AbsolutelyPosition = mino.AbsolutelyPosition;
-            newmino.Positions = new Vector2[4];
+            newmino.Init(mino.AbsolutelyPosition,new Vector2[4]);
             Array.Copy(mino.Positions, newmino.Positions, mino.Positions.Length);
             return newmino;
         }

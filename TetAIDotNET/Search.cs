@@ -232,11 +232,8 @@ namespace TetAIDotNET
                     }
 
                 }
-                mino.Positions[0] += new Vector2(0, -value);
-                mino.Positions[1] += new Vector2(0, -value);
-                mino.Positions[2] += new Vector2(0, -value);
-                mino.Positions[3] += new Vector2(0, -value);
-                mino.AbsolutelyPosition += new Vector2(0, -value);
+
+                mino.Move(new Vector2(0, -value));
 
                 var array = actions.CloneArray();
                 array[actionCount] = Action.Harddrop;
@@ -271,11 +268,7 @@ namespace TetAIDotNET
                 Environment.CheckValidPos(field, current, Vector2.x1))
             {
                 var mino = current.Clone();
-                mino.Positions[0] += Vector2.x1;
-                mino.Positions[1] += Vector2.x1;
-                mino.Positions[2] += Vector2.x1;
-                mino.Positions[3] += Vector2.x1;
-                mino.AbsolutelyPosition += Vector2.x1;
+                mino.Move(Vector2.x1);
 
                 /*場所チェック
                  * なかったら通過
@@ -296,11 +289,7 @@ namespace TetAIDotNET
                 Environment.CheckValidPos(field, current, Vector2.mx1))
             {
                 var mino = current.Clone();
-                mino.Positions[0] += Vector2.mx1;
-                mino.Positions[1] += Vector2.mx1;
-                mino.Positions[2] += Vector2.mx1;
-                mino.Positions[3] += Vector2.mx1;
-                mino.AbsolutelyPosition += Vector2.mx1;
+                mino.Move(Vector2.mx1);
 
                 var array = actions.CloneArray();
                 array[actionCount] = Action.MoveLeft;
@@ -318,11 +307,7 @@ namespace TetAIDotNET
                     Environment.SimpleRotate(Rotate.Right, ref mino);
 
                     Vector2 temp = (Vector2)srs;
-                    mino.Positions[0] += temp;
-                    mino.Positions[1] += temp;
-                    mino.Positions[2] += temp;
-                    mino.Positions[3] += temp;
-                    mino.AbsolutelyPosition += temp;
+                    mino.Move(temp);
 
                     var array = actions.CloneArray();
                     array[actionCount] = Action.RotateRight;
@@ -339,11 +324,7 @@ namespace TetAIDotNET
                     Environment.SimpleRotate(Rotate.Left, ref mino);
 
                     Vector2 temp = (Vector2)srs;
-                    mino.Positions[0] += temp;
-                    mino.Positions[1] += temp;
-                    mino.Positions[2] += temp;
-                    mino.Positions[3] += temp;
-                    mino.AbsolutelyPosition += temp;
+                    mino.Move(temp);
 
 
                     var array = actions.CloneArray();
@@ -395,5 +376,56 @@ namespace TetAIDotNET
                 return false;
             }
         }
+
+        static private Way[] GetPatterns()
+        {
+            return null;
+        }
+
+
+
+        SortedList<int, string> Fields = new SortedList<int, string>();//いる？
+
+
+        List<List<(int hash, int action)>> _seachedPatterns = new List<List<(int hash, int action)>>();
+        HashSet<int> _passedTreeRoute = new HashSet<int>();
+
+        public static int GetBest()
+        {
+            return -1;
+            //操作ループから最も高い評価を取り出す
+        }
+
+        //渡された操作ミノとフィールドの情報からパターン一覧を追加
+        //パターンのリストに追加
+        private void SearchAndAddPatterns(Mino mino, BitArray field)
+        {
+            //中央の位置を専用の変数用意して管理
+
+            //ハードドロップ
+            {
+                //I,S,Zは180回転状態にy+1したら0状態
+                //設置判断いる？そもそも同じ状態にはならないと思うけど
+
+                _seachedPatterns.Add()
+            }
+        }
+
+        private bool IsPassedBefore(Vector2 pos, int rotation)
+        {
+            //rxxyy
+            int hash = pos.y;
+            hash += 100 * pos.x;
+            hash += 10000 * rotation;
+
+            if (rotation == (int)Rotation.Turn)
+                int hash2 = pos.y - 1;
+
+            return _passedTreeRoute.Contains(hash);
+        }
+
+        //評価も追加、評価方法注意
+
+        //
     }
 }
