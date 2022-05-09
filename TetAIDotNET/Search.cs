@@ -411,15 +411,26 @@ namespace TetAIDotNET
             }
         }
 
-        private bool IsPassedBefore(Vector2 pos, int rotation)
+        private bool IsPassedBefore(MinoKind kind, Vector2 pos, int rotation,bool ApplyHistory)
         {
+            //ハッシュ値出して検索、ISZで180状態だった場合は＋１して0回転状態で比較
+
             //rxxyy
             int hash = pos.y;
             hash += 100 * pos.x;
             hash += 10000 * rotation;
 
-            if (rotation == (int)Rotation.Turn)
-                int hash2 = pos.y - 1;
+            if (kind == MinoKind.S ||
+                kind == MinoKind.Z ||
+                kind == MinoKind.I)
+            {
+                if (rotation == (int)Rotation.Turn)
+                {
+                    int hash2 = pos.y + 1;
+                    hash2 += 100 * pos.x;
+                    hash += 10000 * (int)Rotation.Zero;
+                }
+            }
 
             return _passedTreeRoute.Contains(hash);
         }
