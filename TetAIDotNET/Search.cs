@@ -403,9 +403,18 @@ namespace TetAIDotNET
             //中央の位置を専用の変数用意して管理
 
             //右移動
+            if (Environment.CheckValidPos(field, mino, Vector2.x1))
+            {
+                if (!IsPassedBefore(mino.MinoKind, mino.AbsolutelyPosition, (int)mino.Rotation, true))
+                    mino.Move(Vector2.x1);
+
+                //新しいの作れよ
+            }
+
+
             //移動チェック
             {
-                if(!IsPassedBefore(mino.MinoKind,mino.AbsolutelyPosition,(int)mino.Rotation,true))
+                if (!IsPassedBefore(mino.MinoKind, mino.AbsolutelyPosition, (int)mino.Rotation, true))
                 {
 
                 }
@@ -415,7 +424,7 @@ namespace TetAIDotNET
             {
                 //I,S,Zは180回転状態にy+1したら0状態
                 //設置判断いる？そもそも同じ状態にはならないと思うけど
-
+                //↑なるからいるよ
 
                 //    _seachedPatterns.Add()
             }
