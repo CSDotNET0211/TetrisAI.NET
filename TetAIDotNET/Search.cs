@@ -402,16 +402,26 @@ namespace TetAIDotNET
         {
             //中央の位置を専用の変数用意して管理
 
+            //右移動
+            //移動チェック
+            {
+                if(!IsPassedBefore(mino.MinoKind,mino.AbsolutelyPosition,(int)mino.Rotation,true))
+                {
+
+                }
+            }
+
             //ハードドロップ
             {
                 //I,S,Zは180回転状態にy+1したら0状態
                 //設置判断いる？そもそも同じ状態にはならないと思うけど
 
-            //    _seachedPatterns.Add()
+
+                //    _seachedPatterns.Add()
             }
         }
 
-        private bool IsPassedBefore(MinoKind kind, Vector2 pos, int rotation,bool ApplyHistory)
+        private bool IsPassedBefore(MinoKind kind, Vector2 pos, int rotation, bool ApplyHistory)
         {
             //ハッシュ値出して検索、ISZで180状態だった場合は＋１して0回転状態で比較
 
@@ -420,10 +430,10 @@ namespace TetAIDotNET
             hash += 100 * pos.x;
             hash += 10000 * rotation;
 
-            bool result= _passedTreeRoute.Contains(hash);
+            bool result = _passedTreeRoute.Contains(hash);
 
             //あった場合はそのまま返す絶対==true
-            if(result)
+            if (result)
                 return result;
 
             //なかった場合は別チェックと場合によっては追加
@@ -445,17 +455,17 @@ namespace TetAIDotNET
                         return result;
 
                     //なかったら追加判定あったら追加
-                    if(ApplyHistory)
+                    if (ApplyHistory)
                         _passedTreeRoute.Add(hash2);
-                            return false;
+                    return false;
 
                 }
             }
 
-            if(ApplyHistory)
+            if (ApplyHistory)
                 _passedTreeRoute.Add(hash);
-            return false; 
-            
+            return false;
+
         }
 
         //評価も追加、評価方法注意
