@@ -407,7 +407,7 @@ namespace TetAIDotNET
                 //I,S,Zは180回転状態にy+1したら0状態
                 //設置判断いる？そもそも同じ状態にはならないと思うけど
 
-                _seachedPatterns.Add()
+            //    _seachedPatterns.Add()
             }
         }
 
@@ -420,6 +420,14 @@ namespace TetAIDotNET
             hash += 100 * pos.x;
             hash += 10000 * rotation;
 
+            bool result= _passedTreeRoute.Contains(hash);
+
+            //あった場合はそのまま返す絶対==true
+            if(result)
+                return result;
+
+            //なかった場合は別チェックと場合によっては追加
+
             if (kind == MinoKind.S ||
                 kind == MinoKind.Z ||
                 kind == MinoKind.I)
@@ -429,10 +437,25 @@ namespace TetAIDotNET
                     int hash2 = pos.y + 1;
                     hash2 += 100 * pos.x;
                     hash += 10000 * (int)Rotation.Zero;
+
+                    result = _passedTreeRoute.Contains(hash2);
+
+                    //あった場合はそのまま返す絶対==true
+                    if (result)
+                        return result;
+
+                    //なかったら追加判定あったら追加
+                    if(ApplyHistory)
+                        _passedTreeRoute.Add(hash2);
+                            return false;
+
                 }
             }
 
-            return _passedTreeRoute.Contains(hash);
+            if(ApplyHistory)
+                _passedTreeRoute.Add(hash);
+            return false; 
+            
         }
 
         //評価も追加、評価方法注意
