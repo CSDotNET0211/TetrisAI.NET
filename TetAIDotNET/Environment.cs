@@ -157,13 +157,13 @@ namespace TetAIDotNET
             }
             else
             {
-                
+
                 for (int i = 0; i < 4; i++)
                 {
                     AddPosition(ref _positions, -srstest[(int)RotateEnum(rotate, rotation), i].x, i, true);
                     AddPosition(ref _positions, -srstest[(int)RotateEnum(rotate, rotation), i].y, i, false);
                 }
-           //     srstest[(int)RotateEnum(rotate, mino.Rotation), i];
+                //     srstest[(int)RotateEnum(rotate, mino.Rotation), i];
             }
 
         }
@@ -299,7 +299,7 @@ namespace TetAIDotNET
         /// <summary>
         /// 現在操作中ミノ情報 一時的にpublic
         /// </summary>
-      public Mino _nowMino;
+        public Mino _nowMino;
         /// <summary>
         /// ネクスト
         /// </summary>
@@ -456,14 +456,14 @@ namespace TetAIDotNET
                      array[3] = new Vector2(5, 18);
                      break;*/
 
-                 case MinoKind.S:
-                     return 0419051903180418;
+                case MinoKind.S:
+                    return 0419051903180418;
 
-                  /*   array[0] = new Vector2(4, 19);
-                     array[1] = new Vector2(5, 19);
-                     array[2] = new Vector2(3, 18);
-                     array[3] = new Vector2(4, 18);
-                     break;*/
+                /*   array[0] = new Vector2(4, 19);
+                   array[1] = new Vector2(5, 19);
+                   array[2] = new Vector2(3, 18);
+                   array[3] = new Vector2(4, 18);
+                   break;*/
 
                 case MinoKind.Z:
                     return 0319041904180518;
@@ -525,10 +525,9 @@ namespace TetAIDotNET
                     //   Console.Beep(330, 200);
                     if (TryRotate(Rotate.Right, field, ref _nowMino, out srs))
                     {
-                        SimpleRotate(Rotate.Right, ref _nowMino);
-
                         var inputsrs = (Vector2)srs;
                         _nowMino.Move(inputsrs.x, inputsrs.y);
+                        SimpleRotate(Rotate.Right, ref _nowMino, 0);
                     }
                     break;
 
@@ -536,10 +535,9 @@ namespace TetAIDotNET
                     //    Console.Beep(349, 100);
                     if (TryRotate(Rotate.Left, field, ref _nowMino, out srs))
                     {
-                        SimpleRotate(Rotate.Left, ref _nowMino);
-
                         var inputsrs = (Vector2)srs;
                         _nowMino.Move(inputsrs.x, inputsrs.y);
+                        SimpleRotate(Rotate.Left, ref _nowMino, 0);
                     }
                     break;
 
@@ -667,12 +665,12 @@ namespace TetAIDotNET
     /// </summary>
     partial class Environment
     {
-        static public bool CheckValidPos(BitArray field, Mino mino, Vector2 trymove)
+        static public bool CheckValidPos(BitArray field, Mino mino, Vector2 trymove, int add = 0)
         {
             for (int i = 0; i < 4; i++)
             {
-                int x = mino.GetPosition(i, true);
-                int y = mino.GetPosition(i, false);
+                int x = mino.GetPosition(i, true) + add;
+                int y = mino.GetPosition(i, false) + add;
 
                 if (x + trymove.x < FIELD_WIDTH &&
                    x + trymove.x >= 0 &&
@@ -781,13 +779,14 @@ namespace TetAIDotNET
     {
         static public bool TryRotate(Rotate rotate, BitArray field, ref Mino current, out Vector2? srspos)
         {
+            //simplerotateの中ででかくして
             srspos = null;
 
             if (current.MinoKind == MinoKind.O)
                 return false;
 
-            var beforerotate = current.Rotation;
-            SimpleRotate(rotate, ref current);
+
+            SimpleRotate(rotate, ref current, 5);
 
             if (rotate == Rotate.Left)
             {
@@ -795,43 +794,44 @@ namespace TetAIDotNET
                 {
                     if (current.MinoKind == MinoKind.I)
                     {
-                        if (CheckValidPos(field, current, IKickTable[(int)current.Rotation, i].Revert()))
+                        if (CheckValidPos(field, current, IKickTable[(int)current.Rotation, i].Revert(), -5))
                         {
                             srspos = IKickTable[(int)current.Rotation, i].Revert();
                             //回転成功
-                            SimpleRotate(Rotate.Right, ref current);
+                            SimpleRotate(Rotate.Right, ref current, -5);
 
                             return true;
                         }
                     }
                     else
                     {
-                        //if (CheckValidPos(field, current, KickTable[(int)beforerotate, i].Revert()))
-                        if (CheckValidPos(field, current, KickTable[(int)current.Rotation, i].Revert()))
+                        if (CheckValidPos(field, current, KickTable[(int)current.Rotation, i].Revert(), -5))
                         {
                             srspos = KickTable[(int)current.Rotation, i].Revert();
                             //回転成功
-                            SimpleRotate(Rotate.Right, ref current);
+                            SimpleRotate(Rotate.Right, ref current, -5);
 
                             return true;
                         }
 
                     }
                 }
-                SimpleRotate(Rotate.Right, ref current);
+                SimpleRotate(Rotate.Right, ref current, -5);
 
                 return false;
             }
             else if (rotate == Rotate.Right)
             {
+                var beforerotate = current.Rotation;
+
                 for (int i = 0; i < 5; i++)
                 {
                     if (current.MinoKind == MinoKind.I)
                     {
-                        if (CheckValidPos(field, current, IKickTable[(int)beforerotate, i]))
+                        if (CheckValidPos(field, current, IKickTable[(int)beforerotate, i], -5))
                         {
                             //回転成功
-                            SimpleRotate(Rotate.Left, ref current);
+                            SimpleRotate(Rotate.Left, ref current, -5);
 
                             srspos = IKickTable[(int)beforerotate, i];
                             return true;
@@ -839,10 +839,10 @@ namespace TetAIDotNET
                     }
                     else
                     {
-                        if (CheckValidPos(field, current, KickTable[(int)beforerotate, i]))
+                        if (CheckValidPos(field, current, KickTable[(int)beforerotate, i], -5))
                         {
                             //回転成功
-                            SimpleRotate(Rotate.Left, ref current);
+                            SimpleRotate(Rotate.Left, ref current, -5);
 
                             srspos = KickTable[(int)beforerotate, i];
                             return true;
@@ -851,7 +851,7 @@ namespace TetAIDotNET
                     }
 
                 }
-                SimpleRotate(Rotate.Left, ref current);
+                SimpleRotate(Rotate.Left, ref current, -5);
 
                 return false;
             }
@@ -860,9 +860,10 @@ namespace TetAIDotNET
 
 
         }
-        static public void SimpleRotate(Rotate rotate, ref Mino mino)
+        static public void SimpleRotate(Rotate rotate, ref Mino mino, int addtemp=0)
         {
             Vector2[,] movePos;
+            mino.Move(addtemp, addtemp);
 
             switch (mino.MinoKind)
             {
@@ -919,7 +920,7 @@ namespace TetAIDotNET
 
         }
 
-     
+
 
     }
 
