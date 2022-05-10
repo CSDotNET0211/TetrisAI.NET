@@ -9,7 +9,7 @@ namespace TetAIDotNET
 {
     class Print
     {
-        static public void PrintGame(BitArray field, Vector2[] mino, MinoKind[] next, MinoKind? hold, float eval = 0)
+        static public void PrintGame(BitArray field, long mino, MinoKind[] next, MinoKind? hold, float eval = 0)
         {
             Console.CursorLeft = 0;
             Console.CursorTop = 0;
@@ -17,8 +17,13 @@ namespace TetAIDotNET
 
             var newfield = (BitArray)field.Clone();
 
-            foreach (var pos in mino)
-                newfield.Set(pos.x + pos.y * 10,true);
+            for (int i = 0; i < 4; i++)
+            {
+                var x = Mino.GetPosition(mino, i, true);
+                var y = Mino.GetPosition(mino, i, false);
+
+                newfield.Set(x + y * 10, true);
+            }
 
             for (int y = Environment.FIELD_HEIGHT - 1; y >= 0; y--)
             {
@@ -54,15 +59,15 @@ namespace TetAIDotNET
             var newfield = (BitArray)field.Clone();
 
             foreach (var pos in mino)
-                newfield.Set(pos.x + pos.y * 10,true) ;
+                newfield.Set(pos.x + pos.y * 10, true);
 
             for (int y = Environment.FIELD_HEIGHT - 1; y >= 0; y--)
             {
-            Console.CursorLeft = 25;
+                Console.CursorLeft = 25;
                 for (int x = 0; x < Environment.FIELD_WIDTH; x++)
                 {
-                  //  Console.Write(newfield[x, y]);
-                  //  Console.Write(" ");
+                    //  Console.Write(newfield[x, y]);
+                    //  Console.Write(" ");
                 }
                 Console.Write("\n");
             }

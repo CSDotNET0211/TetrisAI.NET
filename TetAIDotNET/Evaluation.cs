@@ -17,11 +17,14 @@ namespace TetAIDotNET
         {
             newfield = (BitArray)field.Clone();
 
-
-            foreach (var pos in mino.Positions)
+            for (int i = 0; i < 4; i++)
             {
-                newfield.Set(pos.x + pos.y * 10, true);
+                int x = mino.GetPosition(i, true);
+                int y = mino.GetPosition(i, false);
+
+                newfield.Set(x + y * 10, true);
             }
+
 
             var cleared = Environment.CheckClearedLine(newfield);
             float clearedValue = 0;

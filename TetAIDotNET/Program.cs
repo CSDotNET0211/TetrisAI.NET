@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +16,12 @@ namespace TetAIDotNET
     {
         static void Main(string[] args)
         {
+            long value = 1234123412341234;
+            Console.WriteLine(value);
+            Mino.AddPosition(ref value, 1, 0, false);
+            Console.WriteLine(value);
+           // Mino.GetPosition(ref value,);
+
             // MisaMinoNET.MisaMino.FindMove(,,,,,,)
             Console.WriteLine("TetrisAI.NET");
             int worker, io;
@@ -122,8 +129,13 @@ namespace TetAIDotNET
                 for (int y = 0; y < 3; y++)
                     field[x, y] = 0;
 
-            foreach (var pos in mino.Positions)
-                field[pos.x, pos.y] = 1;
+            for (int i = 0; i < 4; i++)
+            {
+                int x = mino.GetPosition(i, true);
+                int y = mino.GetPosition(i, false);
+
+                field[x, y] = 1;
+            }
 
             for (int y = 2; y >= 0; y--)
             {

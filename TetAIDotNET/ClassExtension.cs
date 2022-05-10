@@ -8,16 +8,16 @@ namespace TetAIDotNET
 {
     static class ClassExtension
     {
-        static public Mino Clone(this Mino mino)
+  /*      static public Mino Clone(this Mino mino)
         {
             var newmino = new Mino();
             newmino.MinoKind = mino.MinoKind;
             newmino.Rotation = mino.Rotation;
             newmino.Init(mino.AbsolutelyPosition,new Vector2[4]);
-            Array.Copy(mino.Positions, newmino.Positions, mino.Positions.Length);
+            Array.Copy(mino._positions, newmino._positions, mino.Positions.Length);
             return newmino;
         }
-
+  */
         public static int ActionCount(this Action[] array)
         {
             int count = 0;

@@ -45,7 +45,7 @@ namespace TetAIDotNET
 
     }
 
-    public enum MinoKind : byte
+    public enum MinoKind : sbyte
     {
         S,
         Z,
@@ -57,7 +57,7 @@ namespace TetAIDotNET
         Null
     }
 
-    public enum Rotation
+    public enum Rotation : sbyte
     {
         Zero,
         Right,
@@ -71,18 +71,23 @@ namespace TetAIDotNET
     public struct Mino
     {
 
-        public Mino(MinoKind kind, Rotation rotation, Vector2[] position)
+        public Mino(MinoKind kind, Rotation rotation, long position)
         {
             MinoKind = kind;
             Rotation = rotation;
-            Positions = position;
-            AbsolutelyPosition = new Vector2(50, 50);
+            _positions = position;
+            _absolutelyPosition = 0000;
         }
 
         /// <summary>
         /// ミノの位置判定用の絶対位置
         /// </summary>
-        public Vector2 AbsolutelyPosition { get; private set; }
+        private long _absolutelyPosition;
+
+        public long AbsolutelyPosition
+        {
+            get { return _absolutelyPosition; }
+        }
         /// <summary>
         /// ミノの種類
         /// </summary>
@@ -91,30 +96,169 @@ namespace TetAIDotNET
         /// ミノの回転情報
         /// </summary>
         public Rotation Rotation;
+        //xxyyxxyyxxyyxxyy
         /// <summary>
         /// ミノのそれぞれの位置
         /// </summary>
-        public Vector2[] Positions { get; private set; }
-
-        public void Init(Vector2? AbsolutelyPosition = null, Vector2[] Positions = null)
+        private long _positions;
+        public long Position
         {
-            if (AbsolutelyPosition == null)
-                this.AbsolutelyPosition = Vector2.zero;
-            else
-                this.AbsolutelyPosition = (Vector2)AbsolutelyPosition;
-
-             if (Positions == null)
-                this.Positions = new Vector2[4];
-            else
-                this.Positions =Positions;
+            get { return _positions; }
         }
 
-        public void Move(Vector2 pos)
+        public void Init(long AbsolutelyPosition = -1, long Positions = -1)
         {
-            for (int i = 0; i < Positions.Length; i++)
-                Positions[i] += pos;
+            if (AbsolutelyPosition == -1)
+                this._absolutelyPosition = 0000;
+            else
+                this._absolutelyPosition = AbsolutelyPosition;
 
-            AbsolutelyPosition += pos;
+            if (Positions == -1)
+                this._positions = -1;
+            else
+                this._positions = Positions;
+        }
+
+        public void Move(int x = int.MaxValue, int y = int.MaxValue)
+        {
+
+            if (x != int.MaxValue)
+            {
+                for (int i = 0; i < 4; i++)
+                    AddPosition(ref _positions, x, i, true);
+
+                AddPosition(ref _absolutelyPosition, x, int.MaxValue, true);
+            }
+
+            if (y != int.MaxValue)
+            {
+                for (int i = 0; i < 4; i++)
+                    AddPosition(ref _positions, y, i, false);
+
+                AddPosition(ref _absolutelyPosition, y, int.MaxValue, false);
+            }
+
+
+            // AbsolutelyPosition += pos;
+        }
+
+        public void MoveForSRS(Vector2[,] srstest, Rotate rotate, Rotation rotation)
+        {
+            if (rotate == Rotate.Right)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    AddPosition(ref _positions, srstest[(int)rotation, i].x, i, true);
+                    AddPosition(ref _positions, srstest[(int)rotation, i].y, i, false);
+                }
+
+            }
+            else
+            {
+                
+                for (int i = 0; i < 4; i++)
+                {
+                    AddPosition(ref _positions, -srstest[(int)RotateEnum(rotate, rotation), i].x, i, true);
+                    AddPosition(ref _positions, -srstest[(int)RotateEnum(rotate, rotation), i].y, i, false);
+                }
+           //     srstest[(int)RotateEnum(rotate, mino.Rotation), i];
+            }
+
+        }
+
+        /// <summary>
+        /// ミノの位置を足して更新する
+        /// </summary>
+        /// <param name="value">追加差分</param>
+        /// <param name="index">何個目のミノか</param>
+        /// <param name="isX">xかyか</param>
+        static public void AddPosition(ref long array, long value, int index, bool isX)
+        {
+            if (index == int.MaxValue)
+                index = 0;
+            else
+                index = 4 - index - 1;
+            //var beforevalue=GetPosition(index, isX);
+            for (int i = 0; i < index * 4; i++)
+                value *= 10;
+
+            if (isX)
+                value *= 100;
+
+            array += value;
+            //    beforevalue+=value;
+
+
+
+        }
+
+        public int GetPosition(int index, bool isX)
+        {
+            if (index == int.MaxValue)
+                index = 0;
+            else
+                index = 4 - index - 1;
+
+            long value = _positions;
+            //xxyyxxyyxxyyxxyy
+            for (int i = 0; i < index * 4; i++)
+                value /= 10;
+
+            long valueforsub = value / 10000 * 10000;
+
+            value -= valueforsub;
+
+            if (isX)
+                return (int)value / 100;
+            else
+                return (int)value - (int)value / 100 * 100;
+        }
+
+        static public int GetPosition(long value, int index, bool isX)
+        {
+            if (index == int.MaxValue)
+                index = 0;
+            else
+                index = 4 - index - 1;
+
+            //xxyyxxyyxxyyxxyy
+            for (int i = 0; i < index * 4; i++)
+                value /= 10;
+
+            long valueforsub = value / 10000 * 10000;
+
+            value -= valueforsub;
+
+            if (isX)
+                return (int)value / 100;
+            else
+                return (int)value - (int)value / 100 * 100;
+        }
+
+        public static Rotation RotateEnum(Rotate rotate1, Rotation rotation, bool invert = false)
+        {
+            if (invert)
+            {
+                if (rotate1 == Rotate.Left)
+                    rotate1 = Rotate.Right;
+                else
+                    rotate1 = Rotate.Left;
+
+            }
+            if (rotate1 == Rotate.Right)
+            {
+                rotation++;
+                if (rotation == Rotation.Left + 1)
+                    rotation = Rotation.Zero;
+            }
+            else
+            {
+                rotation--;
+                if (rotation == Rotation.Zero - 1)
+                    rotation = Rotation.Left;
+            }
+
+            return rotation;
         }
     }
 
@@ -249,79 +393,101 @@ namespace TetAIDotNET
             else
                 _nowMino.MinoKind = (MinoKind)mino;
 
-            _nowMino.Init(Vector2.zero, GetDefaultMinoPos(_nowMino.MinoKind));
+            _nowMino.Init(Positions: GetDefaultMinoPos(_nowMino.MinoKind));
 
             if (mino == null)
                 RefreshNext(_next);
 
-            foreach (var test in _nowMino.Positions)
+            for (int i = 0; i < 4; i++)
             {
-                if (field.Get(test.x + test.y * 10))
+                var x = _nowMino.GetPosition(i, true);
+                var y = _nowMino.GetPosition(i, false);
+
+                if (field.Get(x + y * 10))
                 {
                     _dead = true;
                     break;
                 }
             }
 
-            Vector2[] GetDefaultMinoPos(MinoKind kind)
-            {
-                var array = new Vector2[4];
-                switch (kind)
-                {
-                    case MinoKind.I:
-                        array[0] = new Vector2(3, 18);
-                        array[1] = new Vector2(4, 18);
-                        array[2] = new Vector2(5, 18);
-                        array[3] = new Vector2(6, 18);
-                        break;
 
-                    case MinoKind.J:
-                        array[0] = new Vector2(3, 19);
-                        array[1] = new Vector2(3, 18);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
 
-                    case MinoKind.L:
-                        array[0] = new Vector2(5, 19);
-                        array[1] = new Vector2(3, 18);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
-
-                    case MinoKind.O:
-                        array[0] = new Vector2(4, 19);
-                        array[1] = new Vector2(5, 19);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
-
-                    case MinoKind.S:
-                        array[0] = new Vector2(4, 19);
-                        array[1] = new Vector2(5, 19);
-                        array[2] = new Vector2(3, 18);
-                        array[3] = new Vector2(4, 18);
-                        break;
-                    case MinoKind.Z:
-                        array[0] = new Vector2(3, 19);
-                        array[1] = new Vector2(4, 19);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
-                    case MinoKind.T:
-                        array[0] = new Vector2(4, 19);
-                        array[1] = new Vector2(3, 18);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
-
-                    default:
-                        throw new Exception();
-                }
-
-                return array;
-            }
         }
+        static long GetDefaultMinoPos(MinoKind kind)
+        {
+            //    var array = new Vector2[4];
+            switch (kind)
+            {
+                case MinoKind.I:
+                    return 0318041805180618;
+
+                /* array[0] = new Vector2(3, 18);
+                  array[1] = new Vector2(4, 18);
+                  array[2] = new Vector2(5, 18);
+                  array[3] = new Vector2(6, 18);
+                  break;*/
+
+                case MinoKind.J:
+                    return 0319031804180518;
+
+                /*    array[0] = new Vector2(3, 19);
+                    array[1] = new Vector2(3, 18);
+                    array[2] = new Vector2(4, 18);
+                    array[3] = new Vector2(5, 18);:
+                    break;*/
+
+                case MinoKind.L:
+                    return 0519031804180518;
+
+                /*     array[0] = new Vector2(5, 19);
+                     array[1] = new Vector2(3, 18);
+                     array[2] = new Vector2(4, 18);
+                     array[3] = new Vector2(5, 18);
+                     break;*/
+
+                case MinoKind.O:
+                    return 0419051904180518;
+
+                /*     array[0] = new Vector2(4, 19);
+                     array[1] = new Vector2(5, 19);
+                     array[2] = new Vector2(4, 18);
+                     array[3] = new Vector2(5, 18);
+                     break;*/
+
+                 case MinoKind.S:
+                     return 0419051903180418;
+
+                  /*   array[0] = new Vector2(4, 19);
+                     array[1] = new Vector2(5, 19);
+                     array[2] = new Vector2(3, 18);
+                     array[3] = new Vector2(4, 18);
+                     break;*/
+
+                case MinoKind.Z:
+                    return 0319041904180518;
+
+                /*  array[0] = new Vector2(3, 19);
+                  array[1] = new Vector2(4, 19);
+                  array[2] = new Vector2(4, 18);
+                  array[3] = new Vector2(5, 18);
+                  break;*/
+
+                case MinoKind.T:
+                    return 0419031804180518;
+
+                /*    array[0] = new Vector2(4, 19);
+                    array[1] = new Vector2(3, 18);
+                    array[2] = new Vector2(4, 18);
+                    array[3] = new Vector2(5, 18);
+                    break;*/
+
+                default:
+                    throw new Exception();
+            }
+
+            //  return array;
+        }
+
         public Way Search()
         {
             return DefaultSearch.Search(field, _nowMino, _next, _canHold, _nowHold);
@@ -329,8 +495,8 @@ namespace TetAIDotNET
 
         public void PrintGame()
         {
-            Print.PrintGame(field, _nowMino.Positions, _next, _nowHold);
-            Print.PrintGame(field, _nowMino.Positions, _next, _nowHold);
+            Print.PrintGame(field, _nowMino.Position, _next, _nowHold);
+            Print.PrintGame(field, _nowMino.Position, _next, _nowHold);
         }
         public void UserInput(Action action)
         {
@@ -341,10 +507,7 @@ namespace TetAIDotNET
                     //   Console.Beep(262, 100);
                     if (CheckValidPos(field, _nowMino, Vector2.x1))
                     {
-                        _nowMino.Positions[0] += Vector2.x1;
-                        _nowMino.Positions[1] += Vector2.x1;
-                        _nowMino.Positions[2] += Vector2.x1;
-                        _nowMino.Positions[3] += Vector2.x1;
+                        _nowMino.Move(Vector2.x1.x, Vector2.x1.y);
                     }
                     break;
 
@@ -352,10 +515,7 @@ namespace TetAIDotNET
                     //    Console.Beep(294, 100);
                     if (CheckValidPos(field, _nowMino, Vector2.mx1))
                     {
-                        _nowMino.Positions[0] += Vector2.mx1;
-                        _nowMino.Positions[1] += Vector2.mx1;
-                        _nowMino.Positions[2] += Vector2.mx1;
-                        _nowMino.Positions[3] += Vector2.mx1;
+                        _nowMino.Move(Vector2.mx1.x, Vector2.mx1.y);
                     }
                     break;
 
@@ -364,10 +524,9 @@ namespace TetAIDotNET
                     if (TryRotate(Rotate.Right, field, ref _nowMino, out srs))
                     {
                         SimpleRotate(Rotate.Right, ref _nowMino);
-                        _nowMino.Positions[0] += (Vector2)srs;
-                        _nowMino.Positions[1] += (Vector2)srs;
-                        _nowMino.Positions[2] += (Vector2)srs;
-                        _nowMino.Positions[3] += (Vector2)srs;
+
+                        var inputsrs = (Vector2)srs;
+                        _nowMino.Move(inputsrs.x, inputsrs.y);
                     }
                     break;
 
@@ -376,10 +535,9 @@ namespace TetAIDotNET
                     if (TryRotate(Rotate.Left, field, ref _nowMino, out srs))
                     {
                         SimpleRotate(Rotate.Left, ref _nowMino);
-                        _nowMino.Positions[0] += (Vector2)srs;
-                        _nowMino.Positions[1] += (Vector2)srs;
-                        _nowMino.Positions[2] += (Vector2)srs;
-                        _nowMino.Positions[3] += (Vector2)srs;
+
+                        var inputsrs = (Vector2)srs;
+                        _nowMino.Move(inputsrs.x, inputsrs.y);
                     }
                     break;
 
@@ -393,8 +551,8 @@ namespace TetAIDotNET
                     {
                         if (CheckValidPos(field, _nowMino, Vector2.my1))
                         {
-                            for (int i = 0; i < _nowMino.Positions.Length; i++)
-                                _nowMino.Positions[i] += Vector2.my1;
+                            _nowMino.Move(Vector2.my1.x, Vector2.my1.y);
+                            //_nowMino._positions[i] += Vector2.my1;
                         }
                         else break;
                     }
@@ -444,17 +602,19 @@ namespace TetAIDotNET
             {
                 if (CheckValidPos(field, _nowMino, Vector2.my1))
                 {
-                    for (int i = 0; i < _nowMino.Positions.Length; i++)
-                        _nowMino.Positions[i] += Vector2.my1;
+                    _nowMino.Move(Vector2.my1.x, Vector2.my1.y);
                 }
                 else break;
             }
 
             _canHold = true;
 
-            foreach (Vector2 pos in _nowMino.Positions)
+            for (int i = 0; i < 4; i++)
             {
-                field.Set(pos.x + pos.y * 10, true);
+                int x = _nowMino.GetPosition(i, true);
+                int y = _nowMino.GetPosition(i, false);
+
+                field.Set(x + y * 10, true);
             }
 
             _score += 2;
@@ -507,12 +667,15 @@ namespace TetAIDotNET
     {
         static public bool CheckValidPos(BitArray field, Mino mino, Vector2 trymove)
         {
-            foreach (var pos in mino.Positions)
+            for (int i = 0; i < 4; i++)
             {
-                if (pos.x + trymove.x < FIELD_WIDTH &&
-                   pos.x + trymove.x >= 0 &&
-                   pos.y + trymove.y >= 0 &&
-                   !field.Get((pos.x + trymove.x) + (pos.y + trymove.y) * 10))
+                int x = mino.GetPosition(i, true);
+                int y = mino.GetPosition(i, false);
+
+                if (x + trymove.x < FIELD_WIDTH &&
+                   x + trymove.x >= 0 &&
+                   y + trymove.y >= 0 &&
+                   !field.Get((x + trymove.x) + (y + trymove.y) * 10))
                 {
 
                 }
@@ -604,67 +767,9 @@ namespace TetAIDotNET
             mino.Rotation = Rotation.Zero;
             mino.MinoKind = mino1;
 
-            mino.Init(Vector2.zero, GetDefaultMinoPos(mino1));
+            mino.Init(Positions: GetDefaultMinoPos(mino1));
 
             return mino;
-            Vector2[] GetDefaultMinoPos(MinoKind kind)
-            {
-                var array = new Vector2[4];
-                switch (kind)
-                {
-                    case MinoKind.I:
-                        array[0] = new Vector2(3, 18);
-                        array[1] = new Vector2(4, 18);
-                        array[2] = new Vector2(5, 18);
-                        array[3] = new Vector2(6, 18);
-                        break;
-
-                    case MinoKind.J:
-                        array[0] = new Vector2(3, 19);
-                        array[1] = new Vector2(3, 18);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
-
-                    case MinoKind.L:
-                        array[0] = new Vector2(5, 19);
-                        array[1] = new Vector2(3, 18);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
-
-                    case MinoKind.O:
-                        array[0] = new Vector2(4, 19);
-                        array[1] = new Vector2(5, 19);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
-
-                    case MinoKind.S:
-                        array[0] = new Vector2(4, 19);
-                        array[1] = new Vector2(5, 19);
-                        array[2] = new Vector2(3, 18);
-                        array[3] = new Vector2(4, 18);
-                        break;
-                    case MinoKind.Z:
-                        array[0] = new Vector2(3, 19);
-                        array[1] = new Vector2(4, 19);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
-                    case MinoKind.T:
-                        array[0] = new Vector2(4, 19);
-                        array[1] = new Vector2(3, 18);
-                        array[2] = new Vector2(4, 18);
-                        array[3] = new Vector2(5, 18);
-                        break;
-
-                    default:
-                        throw new Exception();
-                }
-
-                return array;
-            }
         }
     }
     /// <summary>
@@ -755,70 +860,43 @@ namespace TetAIDotNET
         }
         static public void SimpleRotate(Rotate rotate, ref Mino mino)
         {
-            if (rotate == Rotate.Right)
-            {
-                switch (mino.MinoKind)
-                {
-                    case MinoKind.J:
-                        for (int i = 0; i < mino.Positions.Length; i++)
-                            mino.Positions[i] += JRotateTable[(int)mino.Rotation, i];
-                        break;
-                    case MinoKind.L:
-                        for (int i = 0; i < mino.Positions.Length; i++)
-                            mino.Positions[i] += LRotateTable[(int)mino.Rotation, i];
-                        break;
-                    case MinoKind.S:
-                        for (int i = 0; i < mino.Positions.Length; i++)
-                            mino.Positions[i] += SRotateTable[(int)mino.Rotation, i];
-                        break;
-                    case MinoKind.Z:
-                        for (int i = 0; i < mino.Positions.Length; i++)
-                            mino.Positions[i] += ZRotateTable[(int)mino.Rotation, i];
-                        break;
-                    case MinoKind.T:
-                        for (int i = 0; i < mino.Positions.Length; i++)
-                            mino.Positions[i] += TRotateTable[(int)mino.Rotation, i];
-                        break;
-                    case MinoKind.I:
-                        for (int i = 0; i < mino.Positions.Length; i++)
-                            mino.Positions[i] += IRotateTable[(int)mino.Rotation, i];
-                        break;
+            Vector2[,] movePos;
 
-                    default: throw new Exception();
-                }
-            }
-            else
+            switch (mino.MinoKind)
             {
-                switch (mino.MinoKind)
-                {
-                    case MinoKind.J:
-                        for (int i = 0; i < mino.Positions.Length; i++)
-                            mino.Positions[i] -= JRotateTable[(int)RotateEnum(rotate, mino.Rotation), i];
-                        break;
-                    case MinoKind.L:
-                        for (int i = 0; i < mino.Positions.Length; i++)
-                            mino.Positions[i] -= LRotateTable[(int)RotateEnum(rotate, mino.Rotation), i];
-                        break;
-                    case MinoKind.S:
-                        for (int i = 0; i < mino.Positions.Length; i++)
-                            mino.Positions[i] -= SRotateTable[(int)RotateEnum(rotate, mino.Rotation), i];
-                        break;
-                    case MinoKind.Z:
-                        for (int i = 0; i < mino.Positions.Length; i++)
-                            mino.Positions[i] -= ZRotateTable[(int)RotateEnum(rotate, mino.Rotation), i];
-                        break;
-                    case MinoKind.T:
-                        for (int i = 0; i < mino.Positions.Length; i++)
-                            mino.Positions[i] -= TRotateTable[(int)RotateEnum(rotate, mino.Rotation), i];
-                        break;
-                    case MinoKind.I:
-                        for (int i = 0; i < mino.Positions.Length; i++)
-                            mino.Positions[i] -= IRotateTable[(int)RotateEnum(rotate, mino.Rotation), i];
-                        break;
+                case MinoKind.J:
+                    movePos = JRotateTable;
+                    break;
+                case MinoKind.L:
+                    movePos = LRotateTable;
+                    break;
+                case MinoKind.S:
+                    movePos = SRotateTable;
+                    break;
+                case MinoKind.Z:
+                    movePos = ZRotateTable;
+                    break;
+                case MinoKind.T:
+                    movePos = TRotateTable;
+                    break;
+                case MinoKind.I:
+                    movePos = IRotateTable;
+                    break;
 
-                    default: throw new Exception();
-                }
+                default: throw new Exception();
             }
+
+            mino.MoveForSRS(movePos, rotate, mino.Rotation);
+            /*  if (rotate == Rotate.Right)
+              {
+              }
+              else
+              {
+                  mino.MoveForSRS(movePos, rotate, mino.Rotation);
+                  //
+                  //mino.MoveForSRS(-movePos[(int)mino.Rotation, i].x, -movePos[(int)mino.Rotation, i].y);
+              }*/
+
             RefreshRotateEnum(rotate, ref mino.Rotation);
 
             void RefreshRotateEnum(Rotate rotate1, ref Rotation rotation)
@@ -838,32 +916,8 @@ namespace TetAIDotNET
             }
 
         }
-        static Rotation RotateEnum(Rotate rotate1, Rotation rotation, bool invert = false)
-        {
-            if (invert)
-            {
-                if (rotate1 == Rotate.Left)
-                    rotate1 = Rotate.Right;
-                else
-                    rotate1 = Rotate.Left;
 
-            }
-            if (rotate1 == Rotate.Right)
-            {
-                rotation++;
-                if (rotation == Rotation.Left + 1)
-                    rotation = Rotation.Zero;
-            }
-            else
-            {
-                rotation--;
-                if (rotation == Rotation.Zero - 1)
-                    rotation = Rotation.Left;
-            }
-
-            return rotation;
-        }
-
+     
 
     }
 

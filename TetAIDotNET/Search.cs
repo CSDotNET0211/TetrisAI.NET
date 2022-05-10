@@ -193,8 +193,13 @@ namespace TetAIDotNET
             {
                 var newfield = (BitArray)field.Clone();
 
-                foreach (var pos in way.ResultPos)
-                    newfield.Set(pos.x + pos.y * 10, true);
+                for (int i = 0; i < 4; i++)
+                {
+                    int x = Mino.GetPosition(way.ResultPos, i, true);
+                    int y = Mino.GetPosition(way.ResultPos, i, false);
+
+                    newfield.Set(x + y * 10, true);
+                }
 
                 //ライン消去
                 Environment.CheckClearedLine(newfield);
@@ -219,7 +224,7 @@ namespace TetAIDotNET
             Vector2? srs;
             //ハードドロップ
             {
-                var mino = current.Clone();
+                var mino = current;
 
                 int value = 0;
                 while (true)
@@ -233,7 +238,8 @@ namespace TetAIDotNET
 
                 }
 
-                mino.Move(new Vector2(0, -value));
+                for (int i = 0; i < 4; i++)
+                    mino.Move(i, y: -value);
 
                 var array = actions.CloneArray();
                 array[actionCount] = Action.Harddrop;
@@ -250,14 +256,14 @@ namespace TetAIDotNET
                     {
                         set.Remove(hash);
                         set.Add(hash,
-                       new Way(array, Evaluation.Evaluate(field, mino), mino.Positions));
+                       new Way(array, Evaluation.Evaluate(field, mino), mino.Position));
 
                     }
                 }
                 else
                 {
                     set.Add(hash,
-                        new Way(array, Evaluation.Evaluate(field, mino), mino.Positions));
+                        new Way(array, Evaluation.Evaluate(field, mino), mino.Position));
                 }
 
                 //  set.Add();
@@ -267,8 +273,8 @@ namespace TetAIDotNET
             if (!historyLeft &&
                 Environment.CheckValidPos(field, current, Vector2.x1))
             {
-                var mino = current.Clone();
-                mino.Move(Vector2.x1);
+                var mino = current;
+                    mino.Move(Vector2.x1.x, Vector2.x1.y);
 
                 /*場所チェック
                  * なかったら通過
@@ -288,8 +294,8 @@ namespace TetAIDotNET
             if (!historyRight &&
                 Environment.CheckValidPos(field, current, Vector2.mx1))
             {
-                var mino = current.Clone();
-                mino.Move(Vector2.mx1);
+                var mino = current;
+                    mino.Move(Vector2.mx1.x, Vector2.mx1.y);
 
                 var array = actions.CloneArray();
                 array[actionCount] = Action.MoveLeft;
@@ -303,11 +309,11 @@ namespace TetAIDotNET
                 //右回転
                 if (Environment.TryRotate(Rotate.Right, field, ref current, out srs))
                 {
-                    var mino = current.Clone();
+                    var mino = current;
                     Environment.SimpleRotate(Rotate.Right, ref mino);
 
                     Vector2 temp = (Vector2)srs;
-                    mino.Move(temp);
+                        mino.Move( temp.x, temp.y);
 
                     var array = actions.CloneArray();
                     array[actionCount] = Action.RotateRight;
@@ -320,11 +326,11 @@ namespace TetAIDotNET
                 //左回転
                 if (Environment.TryRotate(Rotate.Left, field, ref current, out srs))
                 {
-                    var mino = current.Clone();
+                    var mino = current;
                     Environment.SimpleRotate(Rotate.Left, ref mino);
 
                     Vector2 temp = (Vector2)srs;
-                    mino.Move(temp);
+                        mino.Move( temp.x, temp.y);
 
 
                     var array = actions.CloneArray();
@@ -341,9 +347,12 @@ namespace TetAIDotNET
 
             int GetHash(Mino mino, bool containsRotate)
             {
-                int testway = 0;
-                testway += mino.AbsolutelyPosition.y;
-                testway += mino.AbsolutelyPosition.x * 100;
+                int testway = (int)mino.AbsolutelyPosition;
+
+
+                //   testway += mino.GetAbsolutelyPosition(0, false);
+                //   testway += mino.GetAbsolutelyPosition(0, true) * 100;
+
                 if (containsRotate)
                     testway += (int)mino.Rotation * 10000;
                 testway += 100000;
@@ -355,9 +364,7 @@ namespace TetAIDotNET
             {
                 //過去の位置をハッシュで管理して同じだったら枝切り
 
-                int testway = 0;
-                testway += mino.AbsolutelyPosition.y;
-                testway += mino.AbsolutelyPosition.x * 100;
+                int testway = (int)mino.AbsolutelyPosition;
                 testway += (int)mino.Rotation * 10000;
                 testway += 100000;
 
@@ -405,8 +412,8 @@ namespace TetAIDotNET
             //右移動
             if (Environment.CheckValidPos(field, mino, Vector2.x1))
             {
-                if (!IsPassedBefore(mino.MinoKind, mino.AbsolutelyPosition, (int)mino.Rotation, true))
-                    mino.Move(Vector2.x1);
+                //  if (!IsPassedBefore(mino.MinoKind, mino._absolutelyPosition, (int)mino.Rotation, true))
+                //        mino.Move(Vector2.x1);
 
                 //新しいの作れよ
             }
@@ -414,7 +421,7 @@ namespace TetAIDotNET
 
             //移動チェック
             {
-                if (!IsPassedBefore(mino.MinoKind, mino.AbsolutelyPosition, (int)mino.Rotation, true))
+                //    if (!IsPassedBefore(mino.MinoKind, mino._absolutelyPosition, (int)mino.Rotation, true))
                 {
 
                 }

@@ -22,14 +22,14 @@ namespace TetAIDotNET
 
     public struct Way
     {
-        public Way(Action[] actions, float eval, Vector2[] result)
+        public Way(Action[] actions, float eval, long result)
         {
             Actions = actions;
             Evaluation = eval;
             ResultPos = result;
         }
         public float Evaluation;
-        public Vector2[] ResultPos;
+        public long ResultPos;
         public Action[] Actions;
 
         public override int GetHashCode()
