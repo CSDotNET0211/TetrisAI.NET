@@ -860,7 +860,7 @@ namespace TetAIDotNET
 
 
         }
-        static public void SimpleRotate(Rotate rotate, ref Mino mino, int addtemp=0)
+        static public void SimpleRotate(Rotate rotate, ref Mino mino, int addtemp)
         {
             Vector2[,] movePos;
             mino.Move(addtemp, addtemp);
