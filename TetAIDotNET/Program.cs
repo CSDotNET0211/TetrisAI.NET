@@ -114,7 +114,7 @@ namespace TetAIDotNET
 
                     }
 
-
+                Console.WriteLine(environment._nowMino.Position);
                 }
             }
 

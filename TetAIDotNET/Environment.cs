@@ -144,6 +144,8 @@ namespace TetAIDotNET
 
         public void MoveForSRS(Vector2[,] srstest, Rotate rotate, Rotation rotation)
         {
+            //0付近で回転すると一時的にマイナスになるから、＋５ぐらいして補正する
+
             if (rotate == Rotate.Right)
             {
                 for (int i = 0; i < 4; i++)
@@ -295,9 +297,9 @@ namespace TetAIDotNET
         public bool _dead = false;
 
         /// <summary>
-        /// 現在操作中ミノ情報
+        /// 現在操作中ミノ情報 一時的にpublic
         /// </summary>
-        Mino _nowMino;
+      public Mino _nowMino;
         /// <summary>
         /// ネクスト
         /// </summary>
