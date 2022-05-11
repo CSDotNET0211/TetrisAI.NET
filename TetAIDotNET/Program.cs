@@ -16,11 +16,9 @@ namespace TetAIDotNET
     {
         static void Main(string[] args)
         {
-            long value = 1234123412341234;
-            Console.WriteLine(value);
-            Mino.AddPosition(ref value, 1, 0, false);
-            Console.WriteLine(value);
-           // Mino.GetPosition(ref value,);
+            Console.WriteLine(Marshal.SizeOf(typeof(Mino)));
+
+            // Mino.GetPosition(ref value,);
 
             // MisaMinoNET.MisaMino.FindMove(,,,,,,)
             Console.WriteLine("TetrisAI.NET");
@@ -56,7 +54,7 @@ namespace TetAIDotNET
                         if (action == Action.Null)
                             break;
                         environment.UserInput(action);
-                        Thread.Sleep(30);
+                        Thread.Sleep(10);
                         environment.PrintGame();
                     }
                     stopwatch.Stop();
@@ -114,7 +112,8 @@ namespace TetAIDotNET
 
                     }
 
-                Console.WriteLine(environment._nowMino.Position);
+                    Console.WriteLine(environment._nowMino.Position);
+                    Console.WriteLine(environment._nowMino.AbsolutelyPosition);
                 }
             }
 

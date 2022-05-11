@@ -76,7 +76,7 @@ namespace TetAIDotNET
             MinoKind = kind;
             Rotation = rotation;
             _positions = position;
-            _absolutelyPosition = 0000;
+            _absolutelyPosition = 5050;
         }
 
         /// <summary>
@@ -109,7 +109,7 @@ namespace TetAIDotNET
         public void Init(long AbsolutelyPosition = -1, long Positions = -1)
         {
             if (AbsolutelyPosition == -1)
-                this._absolutelyPosition = 0000;
+                this._absolutelyPosition = 5050;
             else
                 this._absolutelyPosition = AbsolutelyPosition;
 
@@ -900,24 +900,24 @@ namespace TetAIDotNET
                   //mino.MoveForSRS(-movePos[(int)mino.Rotation, i].x, -movePos[(int)mino.Rotation, i].y);
               }*/
 
-            RefreshRotateEnum(rotate, ref mino.Rotation);
+            GetNextRotateEnum(rotate, ref mino.Rotation);
 
-            void RefreshRotateEnum(Rotate rotate1, ref Rotation rotation)
+
+        }
+        static public void GetNextRotateEnum(Rotate rotate1, ref Rotation rotation)
+        {
+            if (rotate1 == Rotate.Right)
             {
-                if (rotate1 == Rotate.Right)
-                {
-                    rotation++;
-                    if (rotation == Rotation.Left + 1)
-                        rotation = Rotation.Zero;
-                }
-                else
-                {
-                    rotation--;
-                    if (rotation == Rotation.Zero - 1)
-                        rotation = Rotation.Left;
-                }
+                rotation++;
+                if (rotation == Rotation.Left + 1)
+                    rotation = Rotation.Zero;
             }
-
+            else
+            {
+                rotation--;
+                if (rotation == Rotation.Zero - 1)
+                    rotation = Rotation.Left;
+            }
         }
 
 
