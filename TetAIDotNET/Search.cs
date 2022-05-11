@@ -402,7 +402,7 @@ namespace TetAIDotNET
         SortedList<int, string> Fields = new SortedList<int, string>();//いる？
 
 
-        Dictionary<int , Pattern> _searchedPatterns = new Dictionary<int , Pattern>();
+        Dictionary<int, Pattern> _searchedPatterns = new Dictionary<int, Pattern>();
         HashSet<int> _passedTreeRoute = new HashSet<int>();
 
         public static int GetBest()
@@ -416,7 +416,6 @@ namespace TetAIDotNET
         //パターンのリストに追加
         private void SearchAndAddPatterns(Mino mino, BitArray field)
         {
-            //中央の位置を専用の変数用意して管理
 
             //右移動
             if (Environment.CheckValidPos(field, mino, Vector2.x1))
@@ -481,8 +480,13 @@ namespace TetAIDotNET
                 //I,S,Zは180回転状態にy+1したら0状態
                 //設置判断いる？そもそも同じ状態にはならないと思うけど
                 //↑なるからいるよ
+                int hash = (int)mino.AbsolutelyPosition;
+                hash += 10000 * (int)mino.Rotation;
 
 
+
+                if (_searchedPatterns.ContainsKey())
+                    _searchedPatterns.Add()
 
                 //    _seachedPatterns.Add()
             }
@@ -535,6 +539,58 @@ namespace TetAIDotNET
 
         }
 
+        /// <summary>
+        /// 設置位置判定のためのミノの順番を正規化したハッシュを生成
+        /// </summary>
+        /// <param name="kind">ミノの種類</param>
+        /// <param name="rotation">ミノの回転状態</param>
+        /// <param name="hash">通常のハッシュ</param>
+        /// <returns></returns>
+        long GetHashForPosition(MinoKind kind, Rotation rotation, long hash)
+        {
+
+
+
+
+            /*
+            T
+            0123
+            1203
+            3210
+            3021
+
+            S
+            0123
+            2301
+            3210
+            2301
+
+            Z
+            0123
+            0213
+            3210
+            3120
+
+            L
+            0123
+            1230
+            3210
+            0321
+
+            J
+            0123
+            1023
+            3210
+            3201
+
+            I
+            0123
+            0123
+            3210
+            3210
+            */
+
+        }
         //評価も追加、評価方法注意
 
         //
