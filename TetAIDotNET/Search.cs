@@ -413,19 +413,27 @@ namespace TetAIDotNET
         /// </summary>
         HashSet<int> _passedTreeRoute = new HashSet<int>();
 
-        public static int GetBest(MinoKind current, MinoKind[] next, MinoKind? hold, BitArray field)
+        public static int GetBest(MinoKind current, int next, MinoKind? hold, bool canHold, BitArray field)
         {
 
             var queue = new MinoKind[next.Length + 1];
             queue[0] = current;
             next.CopyTo(queue, 1);
 
-            for(int i=0;i<queue.Length;i++)
+            for (int i = 0; i < queue.Length; i++)
             {
-            _searchedPatterns.Clear();
+                _searchedPatterns.Clear();
 
+                var mino=Environment.CreateMino(current);
+
+
+
+                var newfield=(BitArray)field.Clone();
                 //検索関数に渡してパターンを列挙
+                SearchAndAddPatterns(mino,newfield);
                 //複製したフィールドに適用して再帰
+
+                GetBest()
 
             }
 
@@ -442,7 +450,7 @@ namespace TetAIDotNET
         //初期化するときに初期値パターン追加してね
         //渡された操作ミノとフィールドの情報からパターン一覧を追加
         //パターンのリストに追加
-        private void SearchAndAddPatterns(Mino mino, BitArray field)
+       static private void SearchAndAddPatterns(Mino mino, BitArray field)
         {
 
             //右移動
