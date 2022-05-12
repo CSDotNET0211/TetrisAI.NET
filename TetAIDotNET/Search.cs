@@ -397,6 +397,7 @@ namespace TetAIDotNET
         struct Pattern
         {
             public long Move;
+            public long Position;
             public float Eval;
 
         }
@@ -406,17 +407,37 @@ namespace TetAIDotNET
         /// <summary>
         /// 検索したパターンを中心hashをkeyとして収納
         /// </summary>
-        Dictionary<int, Pattern> _searchedPatterns = new Dictionary<int, Pattern>();
+        static Dictionary<int, Pattern> _searchedPatterns = new Dictionary<int, Pattern>();
         /// <summary>
         /// 過去の移動と回転をそれぞれ保持して重複を最小限に
         /// </summary>
         HashSet<int> _passedTreeRoute = new HashSet<int>();
 
-        public static int GetBest()
+        public static int GetBest(MinoKind current, MinoKind[] next, MinoKind? hold, BitArray field)
         {
+
+            var queue = new MinoKind[next.Length + 1];
+            queue[0] = current;
+            next.CopyTo(queue, 1);
+
+            for(int i=0;i<queue.Length;i++)
+            {
+            _searchedPatterns.Clear();
+
+                //検索関数に渡してパターンを列挙
+                //複製したフィールドに適用して再帰
+
+            }
+
+
+
+
             return -1;
             //操作ループから最も高い評価を取り出す
         }
+
+
+
 
         //初期化するときに初期値パターン追加してね
         //渡された操作ミノとフィールドの情報からパターン一覧を追加
@@ -492,8 +513,8 @@ namespace TetAIDotNET
 
 
 
-           //     if (_searchedPatterns.ContainsKey())
-             //       _searchedPatterns.Add()
+                //     if (_searchedPatterns.ContainsKey())
+                //       _searchedPatterns.Add()
 
                 //    _seachedPatterns.Add()
             }
