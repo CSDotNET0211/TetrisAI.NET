@@ -485,8 +485,8 @@ namespace TetAIDotNET
 
 
 
-                if (_searchedPatterns.ContainsKey())
-                    _searchedPatterns.Add()
+           //     if (_searchedPatterns.ContainsKey())
+             //       _searchedPatterns.Add()
 
                 //    _seachedPatterns.Add()
             }
@@ -548,11 +548,89 @@ namespace TetAIDotNET
         /// <returns></returns>
         long GetHashForPosition(MinoKind kind, Rotation rotation, long hash)
         {
+            if (rotation == Rotation.Zero)
+                return hash;
 
+            switch (kind)
+            {
+                case MinoKind.T:
+                    switch (rotation)
+                    {
+                        case Rotation.Right:
+                            return ChangeHashOrder(hash, 1203);
+                        case Rotation.Turn:
+                            return ChangeHashOrder(hash, 3210);
+                        case Rotation.Left:
+                            return ChangeHashOrder(hash, 3021);
+                    }
+                    break;
 
+                case MinoKind.S:
+                    switch (rotation)
+                    {
+                        case Rotation.Right:
+                        case Rotation.Left:
+                            return ChangeHashOrder(hash, 2301);
+                        case Rotation.Turn:
+                            return ChangeHashOrder(hash, 3210);
+                    }
+                    break;
 
+                case MinoKind.Z:
+                    switch (rotation)
+                    {
+                        case Rotation.Right:
+                            return ChangeHashOrder(hash, 0213);
+                        case Rotation.Turn:
+                            return ChangeHashOrder(hash, 3210);
+                        case Rotation.Left:
+                            return ChangeHashOrder(hash, 3120);
+                    }
+                    break;
 
+                case MinoKind.L:
+                    switch (rotation)
+                    {
+                        case Rotation.Right:
+                            return ChangeHashOrder(hash, 1230);
+                        case Rotation.Turn:
+                            return ChangeHashOrder(hash, 3210);
+                        case Rotation.Left:
+                            return ChangeHashOrder(hash, 0321);
+                    }
+                    break;
+
+                case MinoKind.J:
+                    switch (rotation)
+                    {
+                        case Rotation.Right:
+                            return ChangeHashOrder(hash, 1023);
+                        case Rotation.Turn:
+                            return ChangeHashOrder(hash, 3210);
+                        case Rotation.Left:
+                            return ChangeHashOrder(hash, 3201);
+                    }
+                    break;
+
+                case MinoKind.I:
+                    switch (rotation)
+                    {
+                        case Rotation.Right:
+                            return ChangeHashOrder(hash, 0123);
+                        case Rotation.Turn:
+                        case Rotation.Left:
+                            return ChangeHashOrder(hash, 3210);
+
+                    }
+                    break;
+            }
+
+            throw new Exception();
             /*
+             * 1023
+            3210
+            3201
+             * 
             T
             0123
             1203
@@ -590,6 +668,38 @@ namespace TetAIDotNET
             3210
             */
 
+            long ChangeHashOrder(long hashcode, int order)
+            {
+                //https://c-taquna.hatenablog.com/entry/2019/09/09/010513
+
+                long result = 0;
+
+                for (int i = 0; i < 4; i++)
+                {
+                    long temphash = hashcode;
+                    int temporder = order;
+
+                    for (int j = 0; j < 4; j++)
+                    {
+                        temphash /= 10000;
+                        temporder /= 10;
+                    }
+
+                    temphash %= 10000;
+                    temporder %= 10;
+
+                    temporder = 3 - temporder;
+
+                    for (int j = 0; j < temporder; j++)
+                    {
+                        temphash *= 10000;
+                    }
+
+                    result += temphash;
+                }
+
+                return result;
+            }
         }
         //評価も追加、評価方法注意
 
