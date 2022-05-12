@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace TetAIDotNET
 {
+    /// <summary>
+    /// xとyの2次元座標情報を保持
+    /// </summary>
     public struct Vector2
     {
         public Vector2(int x, int y)
@@ -45,6 +48,9 @@ namespace TetAIDotNET
 
     }
 
+    /// <summary>
+    /// ミノの種類
+    /// </summary>
     public enum MinoKind : sbyte
     {
         S,
@@ -57,6 +63,9 @@ namespace TetAIDotNET
         Null
     }
 
+    /// <summary>
+    /// 回転状態
+    /// </summary>
     public enum Rotation : sbyte
     {
         Zero,
@@ -80,7 +89,7 @@ namespace TetAIDotNET
         }
 
         /// <summary>
-        /// ミノの位置判定用の絶対位置
+        /// ミノの位置判定用の中央絶対位置
         /// </summary>
         private long _absolutelyPosition;
 
@@ -106,6 +115,11 @@ namespace TetAIDotNET
             get { return _positions; }
         }
 
+        /// <summary>
+        /// 初期化　いつかコンストラクタに結合
+        /// </summary>
+        /// <param name="AbsolutelyPosition"></param>
+        /// <param name="Positions"></param>
         public void Init(long AbsolutelyPosition = -1, long Positions = -1)
         {
             if (AbsolutelyPosition == -1)
@@ -119,6 +133,11 @@ namespace TetAIDotNET
                 this._positions = Positions;
         }
 
+        /// <summary>
+        /// 移動
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
         public void Move(int x = int.MaxValue, int y = int.MaxValue)
         {
 
@@ -142,10 +161,14 @@ namespace TetAIDotNET
             // AbsolutelyPosition += pos;
         }
 
+        /// <summary>
+        /// SRSキックテーブル移動用
+        /// </summary>
+        /// <param name="srstest"></param>
+        /// <param name="rotate"></param>
+        /// <param name="rotation"></param>
         public void MoveForSRS(Vector2[,] srstest, Rotate rotate, Rotation rotation)
         {
-            //0付近で回転すると一時的にマイナスになるから、＋５ぐらいして補正する
-
             if (rotate == Rotate.Right)
             {
                 for (int i = 0; i < 4; i++)
@@ -153,7 +176,6 @@ namespace TetAIDotNET
                     AddPosition(ref _positions, srstest[(int)rotation, i].x, i, true);
                     AddPosition(ref _positions, srstest[(int)rotation, i].y, i, false);
                 }
-
             }
             else
             {
@@ -163,7 +185,6 @@ namespace TetAIDotNET
                     AddPosition(ref _positions, -srstest[(int)RotateEnum(rotate, rotation), i].x, i, true);
                     AddPosition(ref _positions, -srstest[(int)RotateEnum(rotate, rotation), i].y, i, false);
                 }
-                //     srstest[(int)RotateEnum(rotate, mino.Rotation), i];
             }
 
         }
@@ -180,7 +201,7 @@ namespace TetAIDotNET
                 index = 0;
             else
                 index = 4 - index - 1;
-            //var beforevalue=GetPosition(index, isX);
+
             for (int i = 0; i < index * 4; i++)
                 value *= 10;
 
@@ -188,10 +209,6 @@ namespace TetAIDotNET
                 value *= 100;
 
             array += value;
-            //    beforevalue+=value;
-
-
-
         }
 
         public int GetPosition(int index, bool isX)
@@ -203,17 +220,14 @@ namespace TetAIDotNET
 
             long value = _positions;
             //xxyyxxyyxxyyxxyy
-            for (int i = 0; i < index * 4; i++)
-                value /= 10;
-
-            long valueforsub = value / 10000 * 10000;
-
-            value -= valueforsub;
+            for (int i = 0; i < index; i++)
+                value /= 10000;
+            value %= 10000;
 
             if (isX)
                 return (int)value / 100;
             else
-                return (int)value - (int)value / 100 * 100;
+                return (int)value % 100;
         }
 
         static public int GetPosition(long value, int index, bool isX)
@@ -224,17 +238,14 @@ namespace TetAIDotNET
                 index = 4 - index - 1;
 
             //xxyyxxyyxxyyxxyy
-            for (int i = 0; i < index * 4; i++)
-                value /= 10;
-
-            long valueforsub = value / 10000 * 10000;
-
-            value -= valueforsub;
+            for (int i = 0; i < index; i++)
+                value /= 10000;
+            value %= 10000;
 
             if (isX)
                 return (int)value / 100;
             else
-                return (int)value - (int)value / 100 * 100;
+                return (int)value % 100;
         }
 
         public static Rotation RotateEnum(Rotate rotate1, Rotation rotation, bool invert = false)
@@ -411,83 +422,36 @@ namespace TetAIDotNET
                     break;
                 }
             }
-
-
-
         }
         static long GetDefaultMinoPos(MinoKind kind)
         {
-            //    var array = new Vector2[4];
             switch (kind)
             {
                 case MinoKind.I:
                     return 0318041805180618;
 
-                /* array[0] = new Vector2(3, 18);
-                  array[1] = new Vector2(4, 18);
-                  array[2] = new Vector2(5, 18);
-                  array[3] = new Vector2(6, 18);
-                  break;*/
-
                 case MinoKind.J:
                     return 0319031804180518;
-
-                /*    array[0] = new Vector2(3, 19);
-                    array[1] = new Vector2(3, 18);
-                    array[2] = new Vector2(4, 18);
-                    array[3] = new Vector2(5, 18);:
-                    break;*/
 
                 case MinoKind.L:
                     return 0519031804180518;
 
-                /*     array[0] = new Vector2(5, 19);
-                     array[1] = new Vector2(3, 18);
-                     array[2] = new Vector2(4, 18);
-                     array[3] = new Vector2(5, 18);
-                     break;*/
-
                 case MinoKind.O:
                     return 0419051904180518;
-
-                /*     array[0] = new Vector2(4, 19);
-                     array[1] = new Vector2(5, 19);
-                     array[2] = new Vector2(4, 18);
-                     array[3] = new Vector2(5, 18);
-                     break;*/
 
                 case MinoKind.S:
                     return 0419051903180418;
 
-                /*   array[0] = new Vector2(4, 19);
-                   array[1] = new Vector2(5, 19);
-                   array[2] = new Vector2(3, 18);
-                   array[3] = new Vector2(4, 18);
-                   break;*/
-
                 case MinoKind.Z:
                     return 0319041904180518;
 
-                /*  array[0] = new Vector2(3, 19);
-                  array[1] = new Vector2(4, 19);
-                  array[2] = new Vector2(4, 18);
-                  array[3] = new Vector2(5, 18);
-                  break;*/
-
                 case MinoKind.T:
                     return 0419031804180518;
-
-                /*    array[0] = new Vector2(4, 19);
-                    array[1] = new Vector2(3, 18);
-                    array[2] = new Vector2(4, 18);
-                    array[3] = new Vector2(5, 18);
-                    break;*/
 
                 default:
                     throw new Exception();
             }
 
-            //  return array;
         }
 
         public Way Search()
@@ -550,10 +514,7 @@ namespace TetAIDotNET
                     while (true)
                     {
                         if (CheckValidPos(field, _nowMino, Vector2.my1))
-                        {
                             _nowMino.Move(Vector2.my1.x, Vector2.my1.y);
-                            //_nowMino._positions[i] += Vector2.my1;
-                        }
                         else break;
                     }
                     break;

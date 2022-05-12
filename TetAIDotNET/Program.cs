@@ -54,9 +54,9 @@ namespace TetAIDotNET
                         if (action == Action.Null)
                             break;
                         environment.UserInput(action);
-                        Thread.Sleep(10);
-                        environment.PrintGame();
+                       // Thread.Sleep(10);
                     }
+                        environment.PrintGame();
                     stopwatch.Stop();
                     Console.WriteLine("経過時間:" + stopwatch.Elapsed);
                     //   Console.ReadKey();

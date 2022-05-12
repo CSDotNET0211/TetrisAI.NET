@@ -39,51 +39,15 @@ namespace TetAIDotNET
 
             Console.Write("\n");
 
-            Console.WriteLine("評価:" + eval);
+            Console.WriteLine("評価:" + eval.ToString());
 
             Console.WriteLine("ネクスト");
             foreach (var value in next)
-                Console.WriteLine(value);
-
-            Console.WriteLine("ホールド");
-            if (hold != null)
-                Console.WriteLine((MinoKind)hold);
-        }
-
-        static public void PrintGameValue(BitArray field, Vector2[] mino, MinoKind[] next, MinoKind? hold, float eval = 0)
-        {
-            return;
-            Console.CursorTop = 0;
-
-
-            var newfield = (BitArray)field.Clone();
-
-            foreach (var pos in mino)
-                newfield.Set(pos.x + pos.y * 10, true);
-
-            for (int y = Environment.FIELD_HEIGHT - 1; y >= 0; y--)
-            {
-                Console.CursorLeft = 25;
-                for (int x = 0; x < Environment.FIELD_WIDTH; x++)
-                {
-                    //  Console.Write(newfield[x, y]);
-                    //  Console.Write(" ");
-                }
-                Console.Write("\n");
-            }
-
-            Console.Write("\n");
-
-            Console.WriteLine("評価:" + eval);
-
-            Console.WriteLine("ネクスト");
-            foreach (var value in next)
-                Console.WriteLine(value);
+                Console.WriteLine(value.ToString());
 
             Console.WriteLine("ホールド");
             if (hold != null)
                 Console.WriteLine((MinoKind)hold);
         }
     }
-
 }

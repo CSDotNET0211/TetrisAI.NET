@@ -391,7 +391,9 @@ namespace TetAIDotNET
             return null;
         }
 
-
+        /// <summary>
+        /// 探索した行動のデータを保持
+        /// </summary>
         struct Pattern
         {
             public long Move;
@@ -401,8 +403,13 @@ namespace TetAIDotNET
 
         SortedList<int, string> Fields = new SortedList<int, string>();//いる？
 
-
+        /// <summary>
+        /// 検索したパターンを中心hashをkeyとして収納
+        /// </summary>
         Dictionary<int, Pattern> _searchedPatterns = new Dictionary<int, Pattern>();
+        /// <summary>
+        /// 過去の移動と回転をそれぞれ保持して重複を最小限に
+        /// </summary>
         HashSet<int> _passedTreeRoute = new HashSet<int>();
 
         public static int GetBest()
@@ -702,7 +709,7 @@ namespace TetAIDotNET
             }
         }
         //評価も追加、評価方法注意
-
+        //
         //
     }
 }
