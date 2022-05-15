@@ -17,6 +17,8 @@ namespace TetAIDotNET
         static void Main(string[] args)
         {
             Console.WriteLine(Marshal.SizeOf(typeof(Mino)));
+            Console.WriteLine(Convert.ToString(long.MaxValue,10));
+            Console.WriteLine(Convert.ToString(5000,10));
 
             // Mino.GetPosition(ref value,);
 

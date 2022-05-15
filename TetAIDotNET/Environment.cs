@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -307,6 +308,9 @@ namespace TetAIDotNET
         /// </summary>
         public bool _dead = false;
 
+        public float _pps { get; private set; } = 0;
+        Stopwatch stopwatch=new Stopwatch();
+
         /// <summary>
         /// 現在操作中ミノ情報 一時的にpublic
         /// </summary>
@@ -579,7 +583,7 @@ namespace TetAIDotNET
             }
 
             _score += 2;
-            var line = CheckClearedLine(field);
+            var line = CheckAndClearLine(field);
             _clearedLine += line;
             switch (line)
             {
@@ -648,9 +652,10 @@ namespace TetAIDotNET
 
             return true;
         }
-        static public int CheckClearedLine(BitArray field)
+        static public int CheckAndClearLine(BitArray field)
         {
-            List<int> list = new List<int>();
+            int values = 0;
+            int valueCount = 0;
             bool flag = true;
 
             for (int y = 0; y < FIELD_HEIGHT; y++)
@@ -665,29 +670,62 @@ namespace TetAIDotNET
                     }
                 }
                 if (flag)
-                    list.Add(y);
-            }
-
-            list.Reverse();
-            foreach (var value in list)
-            {
-                DownLine(value, field);
-            }
-
-            return list.Count;
-        }
-        static private void DownLine(int value, BitArray field)
-        {
-            for (int y = value; y < FIELD_HEIGHT; y++)
-            {
-                for (int x = 0; x < FIELD_WIDTH; x++)
                 {
-                    if (y == FIELD_HEIGHT - 1)
-                        field.Set(x + y * 10, false);
-                    else
-                        field.Set(x + y * 10, field.Get(x + (y + 1) * 10));
+                    // list.Add(y);
+                    int temp = y;
+
+                    for (int i = 0; i < valueCount; i++)
+                    {
+                        temp *= 10;
+                    }
+                    valueCount++;
+                    values += temp;
                 }
             }
+
+            // list.Reverse();
+            DownLine(values, valueCount, field);
+
+            return valueCount;
+        }
+        static private void DownLine(int value, int valueCount, BitArray field)
+        {
+            if (valueCount == 0)
+                return;
+
+            int index = 0;
+
+            for (int y = GetValue(value, 0); y < FIELD_HEIGHT; y++)
+            {
+                if (index < valueCount && y == GetValue(value, index))
+                    index++;
+
+                for (int x = 0; x < FIELD_WIDTH; x++)
+                {
+                    if (y + index >= FIELD_HEIGHT)
+                        field.Set(x + y * 10, false);
+                    else
+                        field.Set(x + y * 10, field.Get(x + (y + index) * 10));
+                }
+            }
+
+            int GetValue(int values2, int index2)
+            {
+                for (int i = 0; i < index2; i++)
+                    values2 /= 10;
+
+                return values2 % 10;
+            }
+            /*  for (int y = value; y < FIELD_HEIGHT; y++)
+              {
+                  for (int x = 0; x < FIELD_WIDTH; x++)
+                  {
+                      if (y == FIELD_HEIGHT - 1)
+                          field.Set(x + y * 10, false);
+                      else
+                          field.Set(x + y * 10, field.Get(x + (y + 1) * 10));
+                  }
+              }*/
         }
         static public float GetEval(float[] values)
         {

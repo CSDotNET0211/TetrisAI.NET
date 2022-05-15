@@ -39,6 +39,29 @@ namespace TetAIDotNET
 
     }
 
+    class ISortPattern : IComparer<Pattern>
+    {
+        public static ISortPattern Instance = null;
+
+
+        public static ISortPattern GetInstance()
+        {
+            if (Instance == null)
+                Instance = new ISortPattern();
+            return Instance;
+        }
+
+        int IComparer<Pattern>.Compare(Pattern x, Pattern y)
+        {
+            if (x.Eval > y.Eval)
+                return 1;
+            else if (x.Eval < y.Eval)
+                return -1;
+
+            return 0;
+        }
+    }
+
     class ISortIndivisual : IComparer<Indivisual>
     {
         int IComparer<Indivisual>.Compare(Indivisual x, Indivisual y)
