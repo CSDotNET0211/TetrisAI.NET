@@ -414,7 +414,12 @@ namespace TetAIDotNET
         /// </summary>
         static HashSet<int> _passedTreeRoute = new HashSet<int>();
         static List<Pattern> _patterns = new List<Pattern>();
+        static Pattern? _best = null;
 
+        public static long Get()
+        {
+            GetBest
+        }
 
         public static int GetBest(int current, int next, int nextCount, MinoKind? hold, bool canHold, BitArray field, long firstMove)
         {
@@ -425,7 +430,14 @@ namespace TetAIDotNET
             var patterns = _searchedPatterns.Values.ToArray();
             _searchedPatterns.Clear();
 
+            if (nextCount == 0)
+            {
+
+                return;
+            }
+
             //複製したフィールドに適用して再帰
+            //上位２０個だけにしよう
             foreach (var patternindex in patterns)
             {
                 var newfield = (BitArray)field.Clone();
@@ -455,6 +467,8 @@ namespace TetAIDotNET
                 else
                     first = firstMove;
 
+
+                //ネクストがなかったらここで
                 GetBest(next / 10 * (nextCount - 1), next % 10, nextCount - 1, hold, canHold, newfield, first);
             }
 
