@@ -42,6 +42,14 @@ namespace TetAIDotNET
                 Stopwatch stopwatch = new Stopwatch();
                 while (true)
                 {
+
+
+
+
+
+
+
+
                     var result = environment.Search();
                     /*       stopwatch.Restart();
 

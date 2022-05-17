@@ -422,6 +422,8 @@ namespace TetAIDotNET
             for (int i = 0; i < nexts.Length; i++)
                 nextint = (int)nexts[i] * 10 * (nexts.Length - i - 1);
 
+
+            IsPassedBefore
             GetBest((int)current, nextint, nexts.Length, hold, canHold, field, -1);
 
             return _best.Value.Position;
