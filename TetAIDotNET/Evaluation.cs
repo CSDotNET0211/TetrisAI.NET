@@ -130,7 +130,7 @@ namespace TetAIDotNET
             // return (-0.51f * sumofheight) + (0.76f * cleared) + (-0.3566f * holecount) + (-0.1844f * bump);
         }
 
-        public static float NewEvaluate(BitArray field, Mino mino,int lineClearCount)
+        public static float NewEvaluate(BitArray field,int lineClearCount)
         {
              
             float clearedValue = 0;

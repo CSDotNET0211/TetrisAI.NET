@@ -416,13 +416,20 @@ namespace TetAIDotNET
         static List<Pattern> _patterns = new List<Pattern>();
         static Pattern? _best = null;
 
-        public static long Get()
+        public static long Get(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field)
         {
-            GetBest
+            int nextint = 0;
+            for (int i = 0; i < nexts.Length; i++)
+                nextint = (int)nexts[i] * 10 * (nexts.Length - i - 1);
+
+            GetBest((int)current, nextint, nexts.Length, hold, canHold, field, -1);
+
+            return _best.Value.Position;
         }
 
-        public static int GetBest(int current, int next, int nextCount, MinoKind? hold, bool canHold, BitArray field, long firstMove)
+        public static void GetBest(int current, int next, int nextCount, MinoKind? hold, bool canHold, BitArray field, long firstMove)
         {
+            //ミノの種類からミノ情報作成
             var mino = Environment.CreateMino((MinoKind)current);
 
             //検索関数に渡してパターンを列挙
@@ -430,9 +437,22 @@ namespace TetAIDotNET
             var patterns = _searchedPatterns.Values.ToArray();
             _searchedPatterns.Clear();
 
+            //ネクストカウントが0、つまり最後の先読みの場合最善手を更新して返す
+            //このままだと評価ないよ
             if (nextCount == 0)
             {
+                Pattern? best = null;
 
+                foreach (var patternindex in patterns)
+                {
+                    if (best == null || _patterns[patternindex].Eval > ((Pattern)best).Eval)
+                    {
+                        best = _patterns[patternindex];
+                    }
+
+                }
+
+                _best = best;
                 return;
             }
 
@@ -440,8 +460,10 @@ namespace TetAIDotNET
             //上位２０個だけにしよう
             foreach (var patternindex in patterns)
             {
+                //ハードロでやってる評価もこっちでやっちゃおう
                 var newfield = (BitArray)field.Clone();
 
+                //設置したミノを適用
                 for (int i = 0; i < 4; i++)
                 {
                     var pattern = _patterns[patternindex];
@@ -451,46 +473,23 @@ namespace TetAIDotNET
                     newfield[x + y * 10] = true;
                 }
 
-                //行動は最初のだけ記録
-                //全部追加したlistからインデックスだけ持っておくのがよくない
-                /*patternを追加する際に保持し、Dictionaryにはインデックスを渡す
-                 * 
-                 * 
-                 */
+                //ラインを消去して評価を適用
+                int clearedLine = Environment.CheckAndClearLine(newfield);
+                var temppattern = _patterns[patternindex];
+                temppattern.Eval = Evaluation.NewEvaluate(newfield, clearedLine);
+                _patterns[patternindex] = temppattern;
 
-
-
-                //     int patternIndexTemp=
+                //最初の行動のみ保存
                 long first;
                 if (firstMove == -1)
                     first = _patterns[patternindex].Move;
                 else
                     first = firstMove;
 
-
-                //ネクストがなかったらここで
+                //再帰
                 GetBest(next / 10 * (nextCount - 1), next % 10, nextCount - 1, hold, canHold, newfield, first);
             }
 
-
-            //カレントしかなかった場合は、処理
-
-            //ライン消去いる？
-
-            //全部評価終わってる]
-            //ネクスト０でもカレントがあったらダメやぞ
-            if (nextCount == 0)
-            {
-                // _endSearchedPatterns.Add()
-
-            }
-            else
-            {
-
-
-            }
-
-            return -1;
             //操作ループから最も高い評価を取り出す
         }
 
@@ -498,11 +497,8 @@ namespace TetAIDotNET
 
 
         //初期化するときに初期値パターン追加してね
-        //渡された操作ミノとフィールドの情報からパターン一覧を追加
-        //パターンのリストに追加
         static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, int move)
         {
-
             //右移動
             if (Environment.CheckValidPos(field, mino, Vector2.x1))
             {
@@ -583,10 +579,6 @@ namespace TetAIDotNET
             //ハードドロップ
             {
                 //一番下までソフドロ
-                //I,S,Zは180回転状態にy+1したら0状態
-                //設置判断いる？そもそも同じ状態にはならないと思うけど
-                //↑なるからいるよ
-
                 int temp = 0;
                 while (true)
                 {
@@ -599,9 +591,12 @@ namespace TetAIDotNET
                 }
                 mino.Move(y: -temp);
 
+                //設置位置の重複判定のためのハッシュ作成
                 long hash = GetHashForPosition(mino.MinoKind, mino.Rotation, mino.Position);
                 int valueindex;
                 Pattern value;
+
+                //設置があった場合は行動回数で比較して追加判断
                 if (_searchedPatterns.TryGetValue(hash, out valueindex))
                 {
                     value = _patterns[valueindex];
@@ -609,35 +604,20 @@ namespace TetAIDotNET
                     //行動回数が少ないやつ
                     if (value.MoveCount > moveCount)
                     {
-                        //      _searchedPatterns.Remove(hash);
                         value.MoveCount = moveCount;
                         value.Move = move;
                         _patterns[valueindex] = value;
-                        //          _searchedPatterns.Add(hash, value);
                     }
-
-
                 }
                 else
                 {
                     Pattern pattern = new Pattern();
                     pattern.Position = mino.Position;
-
-                    //複製しよ
-                    BitArray newfield = (BitArray)field.Clone();
-
-                    int clearedLine = Environment.CheckAndClearLine(newfield);
-                    //ライン消去
-                    pattern.Eval = Evaluation.NewEvaluate(newfield, mino, clearedLine);
                     pattern.MoveCount = moveCount;
 
                     _patterns.Add(pattern);
-
                     _searchedPatterns.Add(hash, _patterns.Count - 1);
                 }
-                //     if (_searchedPatterns.ContainsKey())
-                //       _searchedPatterns.Add()
-
             }
         }
 
