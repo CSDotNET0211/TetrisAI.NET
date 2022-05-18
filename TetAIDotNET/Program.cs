@@ -42,7 +42,7 @@ namespace TetAIDotNET
                 Stopwatch stopwatch = new Stopwatch();
                 while (true)
                 {
-
+                    
 
 
 

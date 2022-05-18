@@ -400,11 +400,7 @@ namespace TetAIDotNET
             return null;
         }
 
-
-
-        SortedList<int, string> Fields = new SortedList<int, string>();//いる？
-
-        static List<Pattern> _endSearchedPatterns = new List<Pattern>();
+        //   static List<Pattern> _endSearchedPatterns = new List<Pattern>();
         /// <summary>
         /// 検索したパターンを中心hashをkeyとして収納
         /// </summary>
@@ -422,8 +418,12 @@ namespace TetAIDotNET
             for (int i = 0; i < nexts.Length; i++)
                 nextint = (int)nexts[i] * 10 * (nexts.Length - i - 1);
 
+            _searchedPatterns.Clear();
+            _patterns.Clear();
+            _passedTreeRoute.Clear();
+            _best = null;
 
-            IsPassedBefore
+            IsPassedBefore(current, 5050, 0, 0, 0, true);
             GetBest((int)current, nextint, nexts.Length, hold, canHold, field, -1);
 
             return _best.Value.Position;
@@ -447,6 +447,24 @@ namespace TetAIDotNET
 
                 foreach (var patternindex in patterns)
                 {
+                    var newfield = (BitArray)field.Clone();
+
+                    //設置したミノを適用
+                    for (int i = 0; i < 4; i++)
+                    {
+                        var pattern = _patterns[patternindex];
+                        var x = Mino.GetPosition(pattern.Position, i, true);
+                        var y = Mino.GetPosition(pattern.Position, i, false);
+
+                        newfield[x + y * 10] = true;
+                    }
+
+                    //ラインを消去して評価を適用
+                    int clearedLine = Environment.CheckAndClearLine(newfield);
+                    var temppattern = _patterns[patternindex];
+                    temppattern.Eval = Evaluation.NewEvaluate(newfield, clearedLine);
+                    _patterns[patternindex] = temppattern;
+
                     if (best == null || _patterns[patternindex].Eval > ((Pattern)best).Eval)
                     {
                         best = _patterns[patternindex];
@@ -491,14 +509,8 @@ namespace TetAIDotNET
                 //再帰
                 GetBest(next / 10 * (nextCount - 1), next % 10, nextCount - 1, hold, canHold, newfield, first);
             }
-
-            //操作ループから最も高い評価を取り出す
         }
 
-
-
-
-        //初期化するときに初期値パターン追加してね
         static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, int move)
         {
             //右移動

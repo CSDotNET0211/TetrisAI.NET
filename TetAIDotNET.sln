@@ -5,11 +5,6 @@ VisualStudioVersion = 17.1.32414.318
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TetAIDotNET", "TetAIDotNET\TetAIDotNET.csproj", "{5DFEFDBA-DDCC-460F-9B40-DCF191D7B40B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "TestProject\TestProject.csproj", "{37EA03F3-CACA-482E-B5D2-0A210AF03990}"
-	ProjectSection(ProjectDependencies) = postProject
-		{5DFEFDBA-DDCC-460F-9B40-DCF191D7B40B} = {5DFEFDBA-DDCC-460F-9B40-DCF191D7B40B}
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,10 +15,6 @@ Global
 		{5DFEFDBA-DDCC-460F-9B40-DCF191D7B40B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5DFEFDBA-DDCC-460F-9B40-DCF191D7B40B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5DFEFDBA-DDCC-460F-9B40-DCF191D7B40B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{37EA03F3-CACA-482E-B5D2-0A210AF03990}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{37EA03F3-CACA-482E-B5D2-0A210AF03990}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{37EA03F3-CACA-482E-B5D2-0A210AF03990}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{37EA03F3-CACA-482E-B5D2-0A210AF03990}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
