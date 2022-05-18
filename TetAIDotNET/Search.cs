@@ -406,9 +406,9 @@ namespace TetAIDotNET
         /// </summary>
         static Dictionary<long, int> _searchedPatterns = new Dictionary<long, int>(100);
         /// <summary>
-        /// 過去の移動と回転をそれぞれ保持して重複を最小限に
+        /// ミノ位置をそれぞれ保持して重複を最小限に
         /// </summary>
-        static HashSet<int> _passedTreeRoute = new HashSet<int>();
+        static HashSet<long> _passedTreeRoute = new HashSet<long>();
         static List<Pattern> _patterns = new List<Pattern>();
         static Pattern? _best = null;
 
@@ -423,10 +423,11 @@ namespace TetAIDotNET
             _passedTreeRoute.Clear();
             _best = null;
 
-            IsPassedBefore(current, 5050, 0, 0, 0, true);
-            GetBest((int)current, nextint, nexts.Length, hold, canHold, field, -1);
+           // IsPassedBefore(current, 5050, 0, 0, 0, true);
+            GetBest((int)current, 0, 0, hold, canHold, field, -1);
+           // GetBest((int)current, nextint, nexts.Length, hold, canHold, field, -1);
 
-            return _best.Value.Position;
+            return _best.Value.Move;
         }
 
         public static void GetBest(int current, int next, int nextCount, MinoKind? hold, bool canHold, BitArray field, long firstMove)
@@ -436,7 +437,7 @@ namespace TetAIDotNET
 
             //検索関数に渡してパターンを列挙
             SearchAndAddPatterns(mino, field, 0, 0);
-            var patterns = _searchedPatterns.Values.ToArray();
+            var patternindexs = _searchedPatterns.Values.ToArray();
             _searchedPatterns.Clear();
 
             //ネクストカウントが0、つまり最後の先読みの場合最善手を更新して返す
@@ -445,7 +446,7 @@ namespace TetAIDotNET
             {
                 Pattern? best = null;
 
-                foreach (var patternindex in patterns)
+                foreach (var patternindex in patternindexs)
                 {
                     var newfield = (BitArray)field.Clone();
 
@@ -472,13 +473,14 @@ namespace TetAIDotNET
 
                 }
 
-                _best = best;
+                if (_best == null || best.Value.Eval > _best.Value.Eval)
+                    _best = best;
                 return;
             }
 
             //複製したフィールドに適用して再帰
             //上位２０個だけにしよう
-            foreach (var patternindex in patterns)
+            foreach (var patternindex in patternindexs)
             {
                 //ハードロでやってる評価もこっちでやっちゃおう
                 var newfield = (BitArray)field.Clone();
@@ -511,107 +513,30 @@ namespace TetAIDotNET
             }
         }
 
-        static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, int move)
+        static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, long move)
         {
-            //右移動
-            if (Environment.CheckValidPos(field, mino, Vector2.x1))
-            {
-                var newmino = mino;
-
-                if (!IsPassedBefore(mino.MinoKind, mino.AbsolutelyPosition, Vector2.x1.x, Vector2.x1.y, (int)mino.Rotation, true))
-                {
-                    newmino.Move(Vector2.x1.x, Vector2.x1.y);
-
-                    int temp = (int)Action.MoveRight;
-                    for (int i = 0; i < moveCount; i++)
-                        temp *= 10;
-
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp);
-                }
-            }
-
-            //左移動
-            if (Environment.CheckValidPos(field, mino, Vector2.mx1))
-            {
-                var newmino = mino;
-
-                if (!IsPassedBefore(mino.MinoKind, mino.AbsolutelyPosition, Vector2.mx1.x, Vector2.mx1.y, (int)mino.Rotation, true))
-                {
-                    newmino.Move(Vector2.mx1.x, Vector2.mx1.y);
-
-                    int temp = (int)Action.MoveLeft;
-                    for (int i = 0; i < moveCount; i++)
-                        temp *= 10;
-
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp);
-                }
-            }
-
-            //右回転
-            Vector2? result;
-            if (Environment.TryRotate(Rotate.Right, field, ref mino, out result))
-            {
-                var vec = (Vector2)result;
-                var newmino = mino;
-                Rotation newrotation = 0;
-                Environment.GetNextRotateEnum(Rotate.Right, ref newrotation);
-
-                if (!IsPassedBefore(mino.MinoKind, mino.AbsolutelyPosition, vec.x, vec.y, (int)newrotation, true))
-                {
-                    newmino.Move(vec.x, vec.y);
-                    Environment.SimpleRotate(Rotate.Right, ref newmino, 0);
-
-                    int temp = (int)Action.RotateRight;
-                    for (int i = 0; i < moveCount; i++)
-                        temp *= 10;
-
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp);
-                }
-            }
-
-            //左回転
-            if (Environment.TryRotate(Rotate.Left, field, ref mino, out result))
-            {
-                var vec = (Vector2)result;
-                var newmino = mino;
-                Rotation newrotation = 0;
-                Environment.GetNextRotateEnum(Rotate.Left, ref newrotation);
-
-                if (!IsPassedBefore(mino.MinoKind, mino.AbsolutelyPosition, vec.x, vec.y, (int)newrotation, true))
-                {
-                    newmino.Move(vec.x, vec.y);
-                    Environment.SimpleRotate(Rotate.Left, ref newmino, 0);
-
-                    int temp = (int)Action.RotateLeft;
-                    for (int i = 0; i < moveCount; i++)
-                        temp *= 10;
-
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp);
-                }
-            }
-
             //ハードドロップ
             {
-                int tempmove = (int)Action.Harddrop;
+                long tempmove = (int)Action.Harddrop;
                 for (int i = 0; i < moveCount; i++)
                     tempmove *= 10;
 
-
+                var newmino =mino;
                 //一番下までソフドロ
                 int temp = 0;
                 while (true)
                 {
                     temp++;
-                    if (!Environment.CheckValidPos(field, mino, new Vector2(0, -temp)))
+                    if (!Environment.CheckValidPos(field, newmino, new Vector2(0, -temp)))
                     {
                         temp--;
                         break;
                     }
                 }
-                mino.Move(y: -temp);
+                newmino.Move(y: -temp);
 
                 //設置位置の重複判定のためのハッシュ作成
-                long hash = GetHashForPosition(mino.MinoKind, mino.Rotation, mino.Position);
+                long hash = GetHashForPosition(newmino.MinoKind, newmino.Rotation, newmino.Position);
                 int valueindex;
                 Pattern value;
 
@@ -631,19 +556,113 @@ namespace TetAIDotNET
                 else
                 {
                     Pattern pattern = new Pattern();
-                    pattern.Position = mino.Position;
+                    pattern.Position = newmino.Position;
                     pattern.MoveCount = moveCount;
                     pattern.Move = move + tempmove;
-                    
+
 
                     _patterns.Add(pattern);
                     _searchedPatterns.Add(hash, _patterns.Count - 1);
                 }
             }
+
+            //左移動
+            if (Environment.CheckValidPos(field, mino, Vector2.mx1))
+            {
+                var newmino = mino;
+
+                if (!IsPassedBefore(mino.MinoKind, mino.Position, Vector2.mx1.x, Vector2.mx1.y, mino.Rotation, true))
+                {
+                    newmino.Move(Vector2.mx1.x, Vector2.mx1.y);
+
+                    long temp = (int)Action.MoveLeft;
+                    for (int i = 0; i < moveCount; i++)
+                        temp *= 10;
+
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp);
+                }
+            }
+
+            //右移動
+            if (Environment.CheckValidPos(field, mino, Vector2.x1))
+            {
+                var newmino = mino;
+
+                if (!IsPassedBefore(mino.MinoKind, mino.Position, Vector2.x1.x, Vector2.x1.y,mino.Rotation, true))
+                {
+                    newmino.Move(Vector2.x1.x, Vector2.x1.y);
+
+                    long temp = (int)Action.MoveRight;
+                    for (int i = 0; i < moveCount; i++)
+                        temp *= 10;
+
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp);
+                }
+            }
+
+
+            //右回転
+            Vector2? result;
+            if (Environment.TryRotate(Rotate.Right, field, ref mino, out result))
+            {
+                var vec = (Vector2)result;
+                var newmino = mino;
+                Rotation newrotation = 0;
+                Environment.GetNextRotateEnum(Rotate.Right, ref newrotation);
+
+                if (!IsPassedBefore(mino.MinoKind, mino.Position, vec.x, vec.y, newrotation, true))
+                {
+                    newmino.Move(vec.x, vec.y);
+                    Environment.SimpleRotate(Rotate.Right, ref newmino, 0);
+
+                    long temp = (int)Action.RotateRight;
+                    for (int i = 0; i < moveCount; i++)
+                        temp *= 10;
+
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp);
+                }
+            }
+
+            //左回転
+            if (Environment.TryRotate(Rotate.Left, field, ref mino, out result))
+            {
+                var vec = (Vector2)result;
+                var newmino = mino;
+                Rotation newrotation = 0;
+                Environment.GetNextRotateEnum(Rotate.Left, ref newrotation);
+
+                if (!IsPassedBefore(mino.MinoKind, mino.Position, vec.x, vec.y, newrotation, true))
+                {
+                    newmino.Move(vec.x, vec.y);
+                    Environment.SimpleRotate(Rotate.Left, ref newmino, 0);
+
+                    long temp = (int)Action.RotateLeft;
+                    for (int i = 0; i < moveCount; i++)
+                        temp *= 10;
+
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp);
+                }
+            }
+
+
         }
 
-        static private bool IsPassedBefore(MinoKind kind, long pos, int x, int y, int newrotation, bool ApplyHistory)
+        static private bool IsPassedBefore(MinoKind kind, long pos, int x, int y, Rotation newrotation, bool ApplyHistory)
         {
+        //    pos += y;
+        //    pos += x * 100;
+            var hash = GetHashForPosition(kind, newrotation, pos);
+
+            bool result = _passedTreeRoute.Contains(hash);
+            if (result)
+                return true;
+
+            if (ApplyHistory)
+                _passedTreeRoute.Add(hash);
+
+            return false;/*
+
+
             //ハッシュ値出して検索、ISZで180状態だった場合は＋１して0回転状態で比較
             //Oミノは回転しないからそのままで大丈夫か
 
@@ -686,7 +705,7 @@ namespace TetAIDotNET
             if (ApplyHistory)
                 _passedTreeRoute.Add(hash);
             return false;
-
+            */
         }
 
         /// <summary>

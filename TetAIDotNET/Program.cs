@@ -43,19 +43,22 @@ namespace TetAIDotNET
                 while (true)
                 {
                     var result = environment.Search();
+                    var printrsult = result;
 
                     stopwatch.Restart();
+                    var count = Digit(result);
 
-                    for (int i = 0; i < Digit(result); i++)
+                    for (int i = 0; i < count; i++)
                     {
                         environment.UserInput((Action)(result % 10));
                         result /= 10;
 
-                        Thread.Sleep(50);
+                    //    Thread.Sleep(100);
                     }
 
                     environment.PrintGame();
                     stopwatch.Stop();
+                    Console.WriteLine(printrsult);
                     Console.WriteLine("経過時間:" + stopwatch.Elapsed);
                     //   Console.ReadKey();
                 }
