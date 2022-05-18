@@ -537,7 +537,7 @@ namespace TetAIDotNET
 
                 if (!IsPassedBefore(mino.MinoKind, mino.AbsolutelyPosition, Vector2.mx1.x, Vector2.mx1.y, (int)mino.Rotation, true))
                 {
-                    newmino.Move(Vector2.x1.x, Vector2.x1.y);
+                    newmino.Move(Vector2.mx1.x, Vector2.mx1.y);
 
                     int temp = (int)Action.MoveLeft;
                     for (int i = 0; i < moveCount; i++)
@@ -592,6 +592,11 @@ namespace TetAIDotNET
 
             //ハードドロップ
             {
+                int tempmove = (int)Action.Harddrop;
+                for (int i = 0; i < moveCount; i++)
+                    tempmove *= 10;
+
+
                 //一番下までソフドロ
                 int temp = 0;
                 while (true)
@@ -619,7 +624,7 @@ namespace TetAIDotNET
                     if (value.MoveCount > moveCount)
                     {
                         value.MoveCount = moveCount;
-                        value.Move = move;
+                        value.Move = move + tempmove;
                         _patterns[valueindex] = value;
                     }
                 }
@@ -628,6 +633,8 @@ namespace TetAIDotNET
                     Pattern pattern = new Pattern();
                     pattern.Position = mino.Position;
                     pattern.MoveCount = moveCount;
+                    pattern.Move = move + tempmove;
+                    
 
                     _patterns.Add(pattern);
                     _searchedPatterns.Add(hash, _patterns.Count - 1);

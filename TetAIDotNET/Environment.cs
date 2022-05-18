@@ -309,7 +309,7 @@ namespace TetAIDotNET
         public bool _dead = false;
 
         public float _pps { get; private set; } = 0;
-        Stopwatch stopwatch=new Stopwatch();
+        Stopwatch stopwatch = new Stopwatch();
 
         /// <summary>
         /// 現在操作中ミノ情報 一時的にpublic
@@ -458,9 +458,9 @@ namespace TetAIDotNET
 
         }
 
-        public Way Search()
+        public long Search()
         {
-            return DefaultSearch.Search(field, _nowMino, _next, _canHold, _nowHold);
+            return DefaultSearch.Get(_nowMino.MinoKind, _next, _nowHold, _canHold, field);
         }
 
         public void PrintGame()
@@ -526,6 +526,8 @@ namespace TetAIDotNET
                 case Action.Hold:
                     Hold();
                     break;
+
+                    default:throw new Exception("想定されてない入力");
             }
         }
         private void Hold()
@@ -735,24 +737,25 @@ namespace TetAIDotNET
             environment.Init();
             Evaluation.Weight = values;
 
-            while (true)
-            {
-                var result = environment.Search();
-                foreach (var action in result.Actions)
-                {
-                    if (action == Action.Null)
-                        break;
-                    environment.UserInput(action);
-                }
+            throw new Exception("仮のコメントアウトだけ");
+            /*  while (true)
+              {
+                  var result = environment.Search();
+                  foreach (var action in result.Actions)
+                  {
+                      if (action == Action.Null)
+                          break;
+                      environment.UserInput(action);
+                  }
 
-                if (environment._dead || environment._clearedLine >= 150)
-                {
-                    return environment._score;
-                }
+                  if (environment._dead || environment._clearedLine >= 150)
+                  {
+                      return environment._score;
+                  }
 
-            }
+              }
 
-
+              */
         }
         /// <summary>
         /// ミノの種類から位置情報を生成

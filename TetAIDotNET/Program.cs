@@ -17,8 +17,8 @@ namespace TetAIDotNET
         static void Main(string[] args)
         {
             Console.WriteLine(Marshal.SizeOf(typeof(Mino)));
-            Console.WriteLine(Convert.ToString(long.MaxValue,10));
-            Console.WriteLine(Convert.ToString(5000,10));
+            Console.WriteLine(Convert.ToString(long.MaxValue, 10));
+            Console.WriteLine(Convert.ToString(5000, 10));
 
             // Mino.GetPosition(ref value,);
 
@@ -42,31 +42,19 @@ namespace TetAIDotNET
                 Stopwatch stopwatch = new Stopwatch();
                 while (true)
                 {
-                    
-
-
-
-
-
-
-
                     var result = environment.Search();
-                    /*       stopwatch.Restart();
-
-                         stopwatch.Stop();
-                          Console.WriteLine("経過時間:"+stopwatch.Elapsed);
-                        Console.ReadLine();
-                        Console.Clear();*/
 
                     stopwatch.Restart();
-                    foreach (var action in result.Actions)
+
+                    for (int i = 0; i < Digit(result); i++)
                     {
-                        if (action == Action.Null)
-                            break;
-                        environment.UserInput(action);
-                       // Thread.Sleep(10);
+                        environment.UserInput((Action)(result % 10));
+                        result /= 10;
+
+                        Thread.Sleep(50);
                     }
-                        environment.PrintGame();
+
+                    environment.PrintGame();
                     stopwatch.Stop();
                     Console.WriteLine("経過時間:" + stopwatch.Elapsed);
                     //   Console.ReadKey();
@@ -126,9 +114,14 @@ namespace TetAIDotNET
                     Console.WriteLine(environment._nowMino.AbsolutelyPosition);
                 }
             }
-
-
         }
+
+        static int Digit(long num)
+        {
+            // Mathf.Log10(0)はNegativeInfinityを返すため、別途処理する。
+            return (num == 0) ? 1 : ((int)Math.Log10(num) + 1);
+        }
+
 
         static void Test(int[,] field, Mino mino)
         {
