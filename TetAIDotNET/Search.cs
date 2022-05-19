@@ -600,7 +600,7 @@ namespace TetAIDotNET
                 }
             }
 
-
+            return;
             //右回転
             Vector2? result;
             if (Environment.TryRotate(Rotate.Right, field, ref mino, out result))
@@ -806,7 +806,7 @@ namespace TetAIDotNET
                     long temphash = hashcode;
                     int temporder = order;
 
-                    for (int j = 0; j < 4; j++)
+                    for (int j = 0; j < i; j++)
                     {
                         temphash /= 10000;
                         temporder /= 10;
