@@ -212,6 +212,20 @@ namespace TetAIDotNET
             array += value;
         }
 
+        static public void AddAllPosition(ref long array, int x, int y)
+        {
+            int value = y;
+            value += x *= 100;
+
+            long temp = value;
+            for (int i = 1; i <= 4; i++)
+            {
+                if (i != 1)
+                    value *= 1000;
+                array += temp;
+            }
+        }
+
         public int GetPosition(int index, bool isX)
         {
             if (index == int.MaxValue)
@@ -527,7 +541,7 @@ namespace TetAIDotNET
                     Hold();
                     break;
 
-                    default:throw new Exception("想定されてない入力");
+                default: throw new Exception("想定されてない入力");
             }
         }
         private void Hold()

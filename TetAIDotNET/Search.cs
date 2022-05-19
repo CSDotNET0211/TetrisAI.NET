@@ -423,9 +423,9 @@ namespace TetAIDotNET
             _passedTreeRoute.Clear();
             _best = null;
 
-           // IsPassedBefore(current, 5050, 0, 0, 0, true);
+            // IsPassedBefore(current, 5050, 0, 0, 0, true);
             GetBest((int)current, 0, 0, hold, canHold, field, -1);
-           // GetBest((int)current, nextint, nexts.Length, hold, canHold, field, -1);
+            // GetBest((int)current, nextint, nexts.Length, hold, canHold, field, -1);
 
             return _best.Value.Move;
         }
@@ -521,7 +521,7 @@ namespace TetAIDotNET
                 for (int i = 0; i < moveCount; i++)
                     tempmove *= 10;
 
-                var newmino =mino;
+                var newmino = mino;
                 //一番下までソフドロ
                 int temp = 0;
                 while (true)
@@ -588,7 +588,7 @@ namespace TetAIDotNET
             {
                 var newmino = mino;
 
-                if (!IsPassedBefore(mino.MinoKind, mino.Position, Vector2.x1.x, Vector2.x1.y,mino.Rotation, true))
+                if (!IsPassedBefore(mino.MinoKind, mino.Position, Vector2.x1.x, Vector2.x1.y, mino.Rotation, true))
                 {
                     newmino.Move(Vector2.x1.x, Vector2.x1.y);
 
@@ -649,8 +649,10 @@ namespace TetAIDotNET
 
         static private bool IsPassedBefore(MinoKind kind, long pos, int x, int y, Rotation newrotation, bool ApplyHistory)
         {
-        //    pos += y;
-        //    pos += x * 100;
+            //    pos += y;
+            //    pos += x * 100;
+
+            Mino.AddAllPosition(ref pos, x, y);
             var hash = GetHashForPosition(kind, newrotation, pos);
 
             bool result = _passedTreeRoute.Contains(hash);
@@ -660,52 +662,8 @@ namespace TetAIDotNET
             if (ApplyHistory)
                 _passedTreeRoute.Add(hash);
 
-            return false;/*
-
-
-            //ハッシュ値出して検索、ISZで180状態だった場合は＋１して0回転状態で比較
-            //Oミノは回転しないからそのままで大丈夫か
-
-            //rxxyy
-            int hash = (int)pos;
-            hash += 10000 * newrotation;
-
-            bool result = _passedTreeRoute.Contains(hash);
-
-            //あった場合はそのまま返す絶対==true
-            if (result)
-                return result;
-
-            //なかった場合は別チェックと場合によっては追加
-
-            if (kind == MinoKind.S ||
-                kind == MinoKind.Z ||
-                kind == MinoKind.I)
-            {
-                if (newrotation == (int)Rotation.Turn)
-                {
-                    long hash2 = pos;
-                    Mino.AddPosition(ref hash2, 1, int.MaxValue, false);
-                    hash2 += 10000 * (int)Rotation.Zero;
-
-                    result = _passedTreeRoute.Contains((int)hash2);
-
-                    //あった場合はそのまま返す絶対==true
-                    if (result)
-                        return result;
-
-                    //なかったら追加判定あったら追加
-                    if (ApplyHistory)
-                        _passedTreeRoute.Add((int)hash2);
-                    return false;
-
-                }
-            }
-
-            if (ApplyHistory)
-                _passedTreeRoute.Add(hash);
             return false;
-            */
+             
         }
 
         /// <summary>
