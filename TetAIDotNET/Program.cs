@@ -39,7 +39,7 @@ namespace TetAIDotNET
             environment.Init();
            // Evaluation.Weight = new float[] { -14937.3f, -8614.639f, -550.9185f, -487.5173f, -1525.667f, -58.71915f, 741.6671f, -325.8765f, -84.48547f, -223.764f, -54.847f, -219.4925f, 154.7065f, 481.9854f, 1180.017f, };
             Evaluation.Weight = new float[] { -549.1365f, -6832.648f, 2201.142f, -8525.367f, -224.7138f, };
-
+            // 110.3654 -11176.37 234.8906 907.7881 -288.0103 -29667.07 893.7445 -696.517 -124.9767 1番目の評価:23776
             if (key == ConsoleKey.D1)
             {
                 Stopwatch stopwatch = new Stopwatch();
