@@ -215,13 +215,13 @@ namespace TetAIDotNET
         static public void AddAllPosition(ref long array, int x, int y)
         {
             int value = y;
-            value += x *= 100;
+            value += x * 100;
 
             long temp = value;
             for (int i = 1; i <= 4; i++)
             {
                 if (i != 1)
-                    value *= 1000;
+                    temp *= 10000;
                 array += temp;
             }
         }
@@ -672,7 +672,7 @@ namespace TetAIDotNET
         {
             int values = 0;
             int valueCount = 0;
-            bool flag = true;
+            bool flag;
 
             for (int y = 0; y < FIELD_HEIGHT; y++)
             {
@@ -687,7 +687,6 @@ namespace TetAIDotNET
                 }
                 if (flag)
                 {
-                    // list.Add(y);
                     int temp = y;
 
                     for (int i = 0; i < valueCount; i++)
@@ -711,10 +710,22 @@ namespace TetAIDotNET
 
             int index = 0;
 
-            for (int y = GetValue(value, 0); y < FIELD_HEIGHT; y++)
+            var yvalue = value % 10;   
+            value /= 10;
+            index++;
+            valueCount--;
+
+            for (int y = yvalue; y < FIELD_HEIGHT; y++)
             {
-                if (index < valueCount && y == GetValue(value, index))
+                //y+indexの値がvalueの０番目の値だったら
+                if (valueCount > 0 && y + index == value % 10)
+                {
                     index++;
+                    value /= 10;
+                    valueCount--;
+                    y--;
+                    continue;
+                }
 
                 for (int x = 0; x < FIELD_WIDTH; x++)
                 {
@@ -725,13 +736,6 @@ namespace TetAIDotNET
                 }
             }
 
-            int GetValue(int values2, int index2)
-            {
-                for (int i = 0; i < index2; i++)
-                    values2 /= 10;
-
-                return values2 % 10;
-            }
             /*  for (int y = value; y < FIELD_HEIGHT; y++)
               {
                   for (int x = 0; x < FIELD_WIDTH; x++)

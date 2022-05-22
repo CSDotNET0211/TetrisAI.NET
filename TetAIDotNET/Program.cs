@@ -16,6 +16,7 @@ namespace TetAIDotNET
     {
         static void Main(string[] args)
         {
+
             Console.WriteLine(Marshal.SizeOf(typeof(Mino)));
             Console.WriteLine(Convert.ToString(long.MaxValue, 10));
             Console.WriteLine(Convert.ToString(5000, 10));
@@ -53,8 +54,8 @@ namespace TetAIDotNET
                         environment.UserInput((Action)(result % 10));
                         result /= 10;
 
-                    //    Thread.Sleep(100);
                     }
+                      //  Thread.Sleep(300);
 
                     environment.PrintGame();
                     stopwatch.Stop();
