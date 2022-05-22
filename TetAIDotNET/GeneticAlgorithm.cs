@@ -87,7 +87,7 @@ namespace TetAIDotNET
             if (result == ConsoleKey.D1)
             {
                 Console.Write("読み込む学習データのパスを入力:");
-                var path=Console.ReadLine();
+                var path = Console.ReadLine();
             }
 
             Console.Write("集団の個体数を入力:");
@@ -106,7 +106,7 @@ namespace TetAIDotNET
 
             for (int i = 0; i < learningnum; i++)
             {
-                var param = new float[15];
+                var param = new float[Evaluation.WEIGHT_COUNT];
                 for (int j = 0; j < param.Length; j++)
                 {
                     param[j] = GetRandom(randommin, randommax, random);
@@ -123,7 +123,7 @@ namespace TetAIDotNET
                 AllAddList.AddRange(indivisuals);
 
                 //出力制限
-                if (genCount % 10 == 0)
+                if (genCount % 20 == 0)
                 {
                     string text = "世代数:" + genCount + "\n";
                     for (int i = 0; i < indivisuals.Count; i++)
@@ -137,9 +137,13 @@ namespace TetAIDotNET
                     text += ("----------\n");
                     Console.WriteLine(text);
 
-                    StreamWriter writer = new StreamWriter("../learning_" + genCount + ".txt", false, Encoding.UTF8);
-                    writer.Write(text);
-                    writer.Close();
+                    if (genCount % 100 == 0)
+                    {
+                        StreamWriter writer = new StreamWriter("../learning_" + genCount + ".txt", false, Encoding.UTF8);
+                        writer.Write(text);
+                        writer.Close();
+
+                    }
                 }
 
                 //親から２点抜き出し

@@ -438,7 +438,7 @@ namespace TetAIDotNET
             var mino = Environment.CreateMino((MinoKind)current);
 
             //検索関数に渡してパターンを列挙
-            SearchAndAddPatterns(mino, field, 0, 0, Action.Null);
+            SearchAndAddPatterns(mino, field, 0, 0, Action.Null, 0);
             var patternindexs = _searchedPatterns.Values.ToArray();
             _searchedPatterns.Clear();
 
@@ -469,8 +469,8 @@ namespace TetAIDotNET
                     _patterns[patternindex] = temppattern;
 
 
-           //         Print.PrintGame(newfield, -1, null, null, temppattern.Eval);
-          //          Console.ReadKey();
+                //         Print.PrintGame(newfield, -1, null, null, temppattern.Eval);
+                 //             Console.ReadKey();
 
                     if (best == null || _patterns[patternindex].Eval > ((Pattern)best).Eval)
                     {
@@ -519,8 +519,11 @@ namespace TetAIDotNET
             }
         }
 
-        static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, long move, Action lockDirection)
+        static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, long move, Action lockDirection, int rotateCount)
         {
+            //  if (moveCount > 18)
+            //         return;
+
             //ハードドロップ
             {
                 long tempmove = (int)Action.Harddrop;
@@ -586,7 +589,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveLeft);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveLeft, rotateCount);
                 }
             }
 
@@ -603,14 +606,15 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveRight);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveRight, rotateCount);
                 }
             }
 
             //   return;
             //右回転
             Vector2? result;
-            if (Environment.TryRotate(Rotate.Right, field, ref mino, out result))
+            if (rotateCount < 3 &&
+                Environment.TryRotate(Rotate.Right, field, ref mino, out result))
             {
                 var vec = (Vector2)result;
                 var newmino = mino;
@@ -626,12 +630,13 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1);
                 }
             }
 
             //左回転
-            if (Environment.TryRotate(Rotate.Left, field, ref mino, out result))
+            if (rotateCount < 3 &&
+                Environment.TryRotate(Rotate.Left, field, ref mino, out result))
             {
                 var vec = (Vector2)result;
                 var newmino = mino;
@@ -647,7 +652,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1);
                 }
             }
 

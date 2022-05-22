@@ -32,11 +32,13 @@ namespace TetAIDotNET
             Console.WriteLine("1.テスト");
             Console.WriteLine("2.学習");
             Console.WriteLine("3.手動");
+            Console.WriteLine("4.デバッグ");
 
             var key = Console.ReadKey().Key;
             Environment environment = new Environment();
             environment.Init();
-            Evaluation.Weight = new float[] { 0.2890262f, -19.73375f, -31.28189f, -12.06249f, 32.33967f, -45.3013f, -2.729009f, -47.00863f, -0.1363466f, -0.7741607f, -10.14647f, -23.20074f, 5.343863f, -56.77925f, 3.595039f, };
+           // Evaluation.Weight = new float[] { -14937.3f, -8614.639f, -550.9185f, -487.5173f, -1525.667f, -58.71915f, 741.6671f, -325.8765f, -84.48547f, -223.764f, -54.847f, -219.4925f, 154.7065f, 481.9854f, 1180.017f, };
+            Evaluation.Weight = new float[] { -549.1365f, -6832.648f, 2201.142f, -8525.367f, -224.7138f, };
 
             if (key == ConsoleKey.D1)
             {
@@ -55,7 +57,7 @@ namespace TetAIDotNET
                         result /= 10;
 
                     }
-                      //  Thread.Sleep(300);
+                      Thread.Sleep(1000);
 
                     environment.PrintGame();
                     stopwatch.Stop();
@@ -118,9 +120,19 @@ namespace TetAIDotNET
                     Console.WriteLine(environment._nowMino.AbsolutelyPosition);
                 }
             }
+            else if(key == ConsoleKey.D4)
+            {
+                Console.WriteLine("デバッグモード");
+
+                key = Console.ReadKey().Key;
+
+                Console.WriteLine("1.フィールド編集");
+                Console.WriteLine("2.ネクスト編集");
+
+            }
         }
 
-        static int Digit(long num)
+     public   static int Digit(long num)
         {
             // Mathf.Log10(0)はNegativeInfinityを返すため、別途処理する。
             return (num == 0) ? 1 : ((int)Math.Log10(num) + 1);

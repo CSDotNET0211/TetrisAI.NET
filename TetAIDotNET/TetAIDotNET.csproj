@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ClassExtension.cs" />
+    <Compile Include="Debug.cs" />
     <Compile Include="Environment.cs" />
     <Compile Include="Evaluation.cs" />
     <Compile Include="GeneticAlgorithm.cs" />

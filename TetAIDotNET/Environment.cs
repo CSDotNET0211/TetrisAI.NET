@@ -472,6 +472,8 @@ namespace TetAIDotNET
 
         }
 
+
+
         public long Search()
         {
             return DefaultSearch.Get(_nowMino.MinoKind, _next, _nowHold, _canHold, field);
@@ -656,6 +658,7 @@ namespace TetAIDotNET
                 if (x + trymove.x < FIELD_WIDTH &&
                    x + trymove.x >= 0 &&
                    y + trymove.y >= 0 &&
+                   y + trymove.y < FIELD_HEIGHT &&
                    !field.Get((x + trymove.x) + (y + trymove.y) * 10))
                 {
 
@@ -710,7 +713,7 @@ namespace TetAIDotNET
 
             int index = 0;
 
-            var yvalue = value % 10;   
+            var yvalue = value % 10;
             value /= 10;
             index++;
             valueCount--;
@@ -755,25 +758,35 @@ namespace TetAIDotNET
             environment.Init();
             Evaluation.Weight = values;
 
-            throw new Exception("仮のコメントアウトだけ");
-            /*  while (true)
-              {
-                  var result = environment.Search();
-                  foreach (var action in result.Actions)
-                  {
-                      if (action == Action.Null)
-                          break;
-                      environment.UserInput(action);
-                  }
+            while (true)
+            {
+                var result = environment.Search();
 
-                  if (environment._dead || environment._clearedLine >= 150)
-                  {
-                      return environment._score;
-                  }
+                var count = Program.Digit(result);
 
-              }
+                for (int i = 0; i < count; i++)
+                {
+                    environment.UserInput((Action)(result % 10));
+                    result /= 10;
 
-              */
+                }
+
+                /*
+                                foreach (var action in result)
+                                {
+                                    if (action == Action.Null)
+                                        break;
+                                    environment.UserInput(action);
+                                }
+                */
+                if (environment._dead || environment._clearedLine >= 150)
+                {
+                    return environment._score;
+                }
+
+            }
+
+
         }
         /// <summary>
         /// ミノの種類から位置情報を生成
