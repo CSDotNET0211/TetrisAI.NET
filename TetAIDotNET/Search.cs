@@ -43,22 +43,26 @@ namespace TetAIDotNET
         public static long Get(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field)
         {
             int nextint = 0;
-            for (int i = 0; i < nexts.Length; i++)
+            for (int i = 0; i < 1; i++)
                 nextint = (int)nexts[i] * 10 * (nexts.Length - i - 1);
 
+            nextint = (int)nexts[0];
             _searchedPatterns.Clear();
             //   _patterns.Clear();
             _fields.Clear();
             _passedTreeRoute.Clear();
             _best = null;
 
-            GetBest((int)current, 0, 0, hold, canHold, field, -1);
+            GetBest((int)current, nextint, 1, hold, canHold, field, -1, 0);
 
             return _best.Value.Move;
         }
 
-        public static void GetBest(int current, int next, int nextCount, MinoKind? hold, bool canHold, BitArray field, long firstMove)
+        public static void GetBest(int current, int next, int nextCount, MinoKind? hold, bool canHold, BitArray field, long firstMove, float beforeEval)
         {
+            _passedTreeRoute.Clear();
+
+
             //ミノの種類からミノ情報作成
             var mino = Environment.CreateMino((MinoKind)current);
 
@@ -92,13 +96,24 @@ namespace TetAIDotNET
 
                 for (int beem = 0; beem < beemWidth; beem++)
                 {
+                    patternsInThisMove[beem].Eval += beforeEval;
+
                     //一手ずつ確認
-                    //         Print.PrintGame(newfield, -1, null, null, temppattern.Eval);
-                    //             Console.ReadKey();
+                    // Print.PrintGame(_fields[ patternsInThisMove[beem].FieldIndex], -1, null, null, patternsInThisMove[beem].Eval);
+                    //Console.ReadKey();
+
+                    long first;
+                    if (firstMove == -1)
+                        first = patternsInThisMove[beem].Move;
+                    else
+                        first=firstMove;
 
                     //１つの最終的な手の中で最も良い手が存在しないか今の手がより良い評価だった場合は交換
                     if (best == null || patternsInThisMove[beem].Eval > ((Pattern)best).Eval)
+                    {
+                        patternsInThisMove[beem].Move= first;
                         best = patternsInThisMove[beem];
+                    }
                 }
 
                 //全体の最終的な手の中で最も良いものを取る
@@ -122,6 +137,8 @@ namespace TetAIDotNET
 
             for (int beem = 0; beem < beemWidth2; beem++)
             {
+                patternsInThisMove[beem].Eval += beforeEval;
+
                 //最初の行動のみ保存
                 long first;
                 if (firstMove == -1)
@@ -129,10 +146,14 @@ namespace TetAIDotNET
                 else
                     first = firstMove;
 
+                int newcurrent = next;
+                for (int i = 0; i < nextCount - 1; i++)
+                    newcurrent /= 10;
 
+                newcurrent %= 10;
 
                 //再帰
-                GetBest(next / 10 * (nextCount - 1), next % 10, nextCount - 1, hold, canHold, _fields[patternsInThisMove[beem].FieldIndex], first);
+                GetBest(newcurrent, next % 10, nextCount - 1, hold, canHold, _fields[patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
             }
         }
 
@@ -202,7 +223,7 @@ namespace TetAIDotNET
                     pattern.Eval = Evaluation.NewEvaluate(fieldclone, clearedLine);
 
                     _fields.Add(fieldclone);
-                    pattern.FieldIndex = field.Count - 1;
+                    pattern.FieldIndex = _fields.Count - 1;
 
                     _searchedPatterns.Add(hash, pattern);
                 }

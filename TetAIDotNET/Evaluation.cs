@@ -162,15 +162,16 @@ namespace TetAIDotNET
                     {
                         if (smallest > y)
                             smallest = y;
-                        rowheight[x] = y;
+                        rowheight[x] = y+1;
                         flag = false;
                         break;
                     }
                 }
+
                 if (flag)
                 {
-                    smallest = -1;
-                    rowheight[x] = -1;
+                    smallest = 0;
+                    rowheight[x] = 0;
                 }
 
             }
@@ -226,13 +227,23 @@ namespace TetAIDotNET
                 //     bump += Math.Abs(GetValue(heightsWithoutIdoLong, i) - GetValue(heightsWithoutIdoLong, i + 1));
             }
 
+            /*
+            Console.Clear();
+            Print.PrintGame(field,-1,null,null);
+            Console.WriteLine("ミノ合計:"+ (Weight[0] * sumofheight));
+            Console.WriteLine("ライン消去:"+ clearedValue);
+            Console.WriteLine("穴:"+ (Weight[5] * holecount));
+            Console.WriteLine("でこぼこ:" + (Weight[6] * bump));
+            Console.WriteLine("穴２乗:" + (Weight[7] * holecount * holecount));
+            Console.WriteLine("でこぼこ２乗:" + (Weight[8] * bump * bump));
+            Console.ReadKey();*/
 
             return (Weight[0] * sumofheight) +
                 clearedValue +
-                (Weight[5] * holecount* sumofheight) +//穴の数に対する評価
-                (Weight[6] * bump* sumofheight) +
-                (Weight[7] * holecount * holecount* sumofheight) +
-                (Weight[8] * bump * bump* sumofheight);//穴の数を２乗した評価
+                (Weight[5] * holecount) +//穴の数に対する評価
+                (Weight[6] * bump) +
+                (Weight[7] * holecount * sumofheight) +
+                (Weight[8] * bump * sumofheight);//穴の数を２乗した評価
             // return (-0.51f * sumofheight) + (0.76f * cleared) + (-0.3566f * holecount) + (-0.1844f * bump);
 
             int GetValue(long value, int index)
