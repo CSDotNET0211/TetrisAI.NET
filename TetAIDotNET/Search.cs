@@ -190,7 +190,6 @@ namespace TetAIDotNET
 
 
             //ビームサーチ準備
-            //foreach用に抜き出す
             var nextgen = new Way[10];
             for (int i = 0; i < nextgen.Length; i++)
             {
@@ -198,15 +197,17 @@ namespace TetAIDotNET
                 nextgen[i].Evaluation += eval * 0.6f;
             }
 
+
+            //sortしないと
             //ビームサーチ　ビーム幅
-            foreach (var way in nextgen)
+            for (int beem = 0; beem < 20; beem++)
             {
                 var newfield = (BitArray)field.Clone();
 
                 for (int i = 0; i < 4; i++)
                 {
-                    int x = Mino.GetPosition(way.ResultPos, i, true);
-                    int y = Mino.GetPosition(way.ResultPos, i, false);
+                    int x = Mino.GetPosition(nextgen[beem].ResultPos, i, true);
+                    int y = Mino.GetPosition(nextgen[beem].ResultPos, i, false);
 
                     newfield.Set(x + y * 10, true);
                 }
@@ -214,7 +215,7 @@ namespace TetAIDotNET
                 //ライン消去
                 Environment.CheckAndClearLine(newfield);
 
-                SearchTree(ref best, newfield, current, newnext, way.Evaluation);
+                SearchTree(ref best, newfield, current, newnext, nextgen[beem].Evaluation);
 
             }
         }
@@ -395,10 +396,6 @@ namespace TetAIDotNET
             }
         }
 
-        static private Way[] GetPatterns()
-        {
-            return null;
-        }
 
         //   static List<Pattern> _endSearchedPatterns = new List<Pattern>();
         /// <summary>
@@ -423,11 +420,7 @@ namespace TetAIDotNET
             _passedTreeRoute.Clear();
             _best = null;
 
-            // IsPassedBefore(current, 5050, 0, 0, 0, true);
-
-            GetBest((int)current, 0, 0, hold, canHold, field, -1);
-
-            // GetBest((int)current, nextint, nexts.Length, hold, canHold, field, -1);
+            GetBest((int)current,0,0, hold, canHold, field, -1);
 
             return _best.Value.Move;
         }
@@ -443,16 +436,27 @@ namespace TetAIDotNET
             _searchedPatterns.Clear();
 
             //ネクストカウントが0、つまり最後の先読みの場合最善手を更新して返す
-            //このままだと評価ないよ
+            //上位２０個を持ってくる
             if (nextCount == 0)
             {
                 Pattern? best = null;
 
-                foreach (var patternindex in patternindexs)
+                int beemWidth;
+                if (patternindexs.Length < 20)
+                    beemWidth = patternindexs.Length;
+                else
+                    beemWidth = 20;
+
+                //パターンをソートしてビームサーチ
+              //  Array.Sort(patternindexs,ISortPattern.GetInstance());
+                
+
+                for (int beem = 0; beem < beemWidth; beem++)
+                //   foreach (var patternindex in patternindexs)
                 {
                     var newfield = (BitArray)field.Clone();
 
-                    var pattern = _patterns[patternindex];
+                    var pattern = _patterns[patternindexs[beem]];
                     //設置したミノを適用
                     for (int i = 0; i < 4; i++)
                     {
@@ -464,17 +468,18 @@ namespace TetAIDotNET
 
                     //ラインを消去して評価を適用
                     int clearedLine = Environment.CheckAndClearLine(newfield);
-                    var temppattern = _patterns[patternindex];
+                    var temppattern = _patterns[patternindexs[beem]];
                     temppattern.Eval = Evaluation.NewEvaluate(newfield, clearedLine);
-                    _patterns[patternindex] = temppattern;
+                    _patterns[patternindexs[beem]] = temppattern;
 
 
-                //         Print.PrintGame(newfield, -1, null, null, temppattern.Eval);
-                 //             Console.ReadKey();
+                    //一手ずつ確認
+                    //         Print.PrintGame(newfield, -1, null, null, temppattern.Eval);
+                    //             Console.ReadKey();
 
-                    if (best == null || _patterns[patternindex].Eval > ((Pattern)best).Eval)
+                    if (best == null || _patterns[patternindexs[beem]].Eval > ((Pattern)best).Eval)
                     {
-                        best = _patterns[patternindex];
+                        best = _patterns[patternindexs[beem]];
                     }
 
                 }
@@ -485,8 +490,16 @@ namespace TetAIDotNET
             }
 
             //複製したフィールドに適用して再帰
-            //上位２０個だけにしよう
-            foreach (var patternindex in patternindexs)
+            //上位２０個
+
+            int beemWidth2;
+            if (patternindexs.Length < 20)
+                beemWidth2 = patternindexs.Length;
+            else
+                beemWidth2 = 20;
+
+            for (int beem = 0; beem < beemWidth2; beem++)
+            //  foreach (var patternindex in patternindexs)
             {
                 //ハードロでやってる評価もこっちでやっちゃおう
                 var newfield = (BitArray)field.Clone();
@@ -494,7 +507,7 @@ namespace TetAIDotNET
                 //設置したミノを適用
                 for (int i = 0; i < 4; i++)
                 {
-                    var pattern = _patterns[patternindex];
+                    var pattern = _patterns[patternindexs[beem]];
                     var x = Mino.GetPosition(pattern.Position, i, true);
                     var y = Mino.GetPosition(pattern.Position, i, false);
 
@@ -503,14 +516,14 @@ namespace TetAIDotNET
 
                 //ラインを消去して評価を適用
                 int clearedLine = Environment.CheckAndClearLine(newfield);
-                var temppattern = _patterns[patternindex];
+                var temppattern = _patterns[patternindexs[beem]];
                 temppattern.Eval = Evaluation.NewEvaluate(newfield, clearedLine);
-                _patterns[patternindex] = temppattern;
+                _patterns[patternindexs[beem]] = temppattern;
 
                 //最初の行動のみ保存
                 long first;
                 if (firstMove == -1)
-                    first = _patterns[patternindex].Move;
+                    first = _patterns[patternindexs[beem]].Move;
                 else
                     first = firstMove;
 
@@ -521,9 +534,6 @@ namespace TetAIDotNET
 
         static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, long move, Action lockDirection, int rotateCount)
         {
-            //  if (moveCount > 18)
-            //         return;
-
             //ハードドロップ
             {
                 long tempmove = (int)Action.Harddrop;
@@ -669,7 +679,7 @@ namespace TetAIDotNET
         /// <param name="newrotation"></param>
         /// <param name="ApplyHistory"></param>
         /// <returns></returns>
-        static public bool IsPassedBefore(MinoKind kind, long pos, int x, int y, Rotation newrotation, bool ApplyHistory)
+        static private bool IsPassedBefore(MinoKind kind, long pos, int x, int y, Rotation newrotation, bool ApplyHistory)
         {
             //    pos += y;
             //    pos += x * 100;

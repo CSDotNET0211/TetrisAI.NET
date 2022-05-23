@@ -41,7 +41,7 @@ namespace TetAIDotNET
 
     class ISortPattern : IComparer<Pattern>
     {
-        public static ISortPattern Instance = null;
+     static ISortPattern Instance = null;
 
 
         public static ISortPattern GetInstance()
