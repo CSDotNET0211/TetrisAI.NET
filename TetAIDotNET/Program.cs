@@ -37,8 +37,8 @@ namespace TetAIDotNET
             var key = Console.ReadKey().Key;
             Environment environment = new Environment();
             environment.Init();
-           // Evaluation.Weight = new float[] { -14937.3f, -8614.639f, -550.9185f, -487.5173f, -1525.667f, -58.71915f, 741.6671f, -325.8765f, -84.48547f, -223.764f, -54.847f, -219.4925f, 154.7065f, 481.9854f, 1180.017f, };
-            Evaluation.Weight = new float[] { 110.3654f, -11176.37f, 234.8906f, 907.7881f, -288.0103f, -29667.07f, 893.7445f, -696.517f, -124.9767f, };
+            // Evaluation.Weight = new float[] { -14937.3f, -8614.639f, -550.9185f, -487.5173f, -1525.667f, -58.71915f, 741.6671f, -325.8765f, -84.48547f, -223.764f, -54.847f, -219.4925f, 154.7065f, 481.9854f, 1180.017f, };
+            Evaluation.Weight = new float[] { 4198.104f, - 6231.561f, - 18202.82f, 4488.615f, - 1293.483f, -10090.23f, 3063.58f, -11857.93f, -470.6918f, };
             // 110.3654 -11176.37 234.8906 907.7881 -288.0103 -29667.07 893.7445 -696.517 -124.9767 1番目の評価:23776
             if (key == ConsoleKey.D1)
             {
@@ -57,7 +57,7 @@ namespace TetAIDotNET
                         result /= 10;
 
                     }
-                    //  Thread.Sleep(100);
+                    Thread.Sleep(100);
 
                     environment.PrintGame();
                     stopwatch.Stop();
@@ -120,7 +120,7 @@ namespace TetAIDotNET
                     Console.WriteLine(environment._nowMino.AbsolutelyPosition);
                 }
             }
-            else if(key == ConsoleKey.D4)
+            else if (key == ConsoleKey.D4)
             {
                 Console.WriteLine("デバッグモード");
 
@@ -132,7 +132,7 @@ namespace TetAIDotNET
             }
         }
 
-     public   static int Digit(long num)
+        public static int Digit(long num)
         {
             // Mathf.Log10(0)はNegativeInfinityを返すため、別途処理する。
             return (num == 0) ? 1 : ((int)Math.Log10(num) + 1);
