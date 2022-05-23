@@ -150,6 +150,7 @@ namespace TetAIDotNET
                 var index1 = random.Next(0, indivisuals.Count);
                 var index2 = random.Next(0, indivisuals.Count);
 
+                //子供を作って評価
                 var childs = new List<Indivisual>();
                 for (int i = 0; i < childnum; i++)
                 {
@@ -157,8 +158,10 @@ namespace TetAIDotNET
                     childs[childs.Count - 1].Evaluation = Environment.GetEval(childs[childs.Count - 1].Values);
                 }
 
+                //子供を次世代に追加
                 AllAddList.AddRange(childs);
                 AllAddList.Sort(new ISortIndivisual());
+
 
                 indivisuals.Add(AllAddList[0]);
                 indivisuals.Add(TournamentChoise(AllAddList.ToArray(), 2));

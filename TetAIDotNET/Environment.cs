@@ -779,10 +779,11 @@ namespace TetAIDotNET
                                     environment.UserInput(action);
                                 }
                 */
-                if (environment._dead || environment._clearedLine >= 150)
-                {
-                    return environment._score;
-                }
+                if (environment._dead)
+                    return environment._score - 3000;
+
+                if (environment._clearedLine >= 150)
+                return environment._score;
 
             }
 

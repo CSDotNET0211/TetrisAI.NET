@@ -54,9 +54,9 @@ namespace TetAIDotNET
         int IComparer<Pattern>.Compare(Pattern x, Pattern y)
         {
             if (x.Eval > y.Eval)
-                return 1;
-            else if (x.Eval < y.Eval)
                 return -1;
+            else if (x.Eval < y.Eval)
+                return 1;
 
             return 0;
         }

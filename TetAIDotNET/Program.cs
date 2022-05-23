@@ -57,7 +57,7 @@ namespace TetAIDotNET
                         result /= 10;
 
                     }
-                      Thread.Sleep(100);
+                    //  Thread.Sleep(100);
 
                     environment.PrintGame();
                     stopwatch.Stop();
