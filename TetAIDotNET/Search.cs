@@ -40,20 +40,20 @@ namespace TetAIDotNET
 
         public static List<BitArray> _fields = new List<BitArray>();
 
-        public static long Get(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field)
+        public static long Get(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field, int nextCount)
         {
             int nextint = 0;
-            for (int i = 0; i < 1; i++)
-                nextint = (int)nexts[i] * 10 * (nexts.Length - i - 1);
+            for (int i = 0; i < nextCount; i++)
+                nextint = (int)nexts[i] * (10 * (nextCount - i - 1));
 
-            nextint = (int)nexts[0];
+            //   nextint = (int)nexts[0];
             _searchedPatterns.Clear();
             //   _patterns.Clear();
             _fields.Clear();
             _passedTreeRoute.Clear();
             _best = null;
 
-            GetBest((int)current, nextint, 1, hold, canHold, field, -1, 0);
+            GetBest((int)current, nextint, nextCount, hold, canHold, field, -1, 0);
 
             return _best.Value.Move;
         }
@@ -80,13 +80,13 @@ namespace TetAIDotNET
                 //20より大きい場合はソートして上位の順番で再帰
                 //これ小さい順じゃね？
                 int beemWidth;
-                if (patternsInThisMove.Length < 20)
+                if (patternsInThisMove.Length < 10)
                     beemWidth = patternsInThisMove.Length;
                 else
                 {
 
                     Array.Sort(patternsInThisMove, ISortPattern.GetInstance());
-                    beemWidth = 20;
+                    beemWidth = 10;
                 }
 
                 //パターンをソートしてビームサーチ
@@ -106,12 +106,12 @@ namespace TetAIDotNET
                     if (firstMove == -1)
                         first = patternsInThisMove[beem].Move;
                     else
-                        first=firstMove;
+                        first = firstMove;
 
                     //１つの最終的な手の中で最も良い手が存在しないか今の手がより良い評価だった場合は交換
                     if (best == null || patternsInThisMove[beem].Eval > ((Pattern)best).Eval)
                     {
-                        patternsInThisMove[beem].Move= first;
+                        patternsInThisMove[beem].Move = first;
                         best = patternsInThisMove[beem];
                     }
                 }
@@ -127,11 +127,11 @@ namespace TetAIDotNET
 
             //20より大きい場合はソートして再帰
             int beemWidth2;
-            if (patternsInThisMove.Length <= 20)
+            if (patternsInThisMove.Length <= 10)
                 beemWidth2 = patternsInThisMove.Length;
             else
             {
-                beemWidth2 = 20;
+                beemWidth2 = 10;
                 Array.Sort(patternsInThisMove, ISortPattern.GetInstance());
             }
 
@@ -147,13 +147,17 @@ namespace TetAIDotNET
                     first = firstMove;
 
                 int newcurrent = next;
+                int newnext = next;
+                int tempDiv = 10;
                 for (int i = 0; i < nextCount - 1; i++)
+                {
                     newcurrent /= 10;
+                    tempDiv *= 10;
+                }
 
-                newcurrent %= 10;
-
+                newnext %= tempDiv;
                 //再帰
-                GetBest(newcurrent, next % 10, nextCount - 1, hold, canHold, _fields[patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
+                GetBest(newcurrent, newnext, nextCount - 1, hold, canHold, _fields[patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
             }
         }
 

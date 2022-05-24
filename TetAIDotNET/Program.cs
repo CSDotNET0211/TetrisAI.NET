@@ -46,10 +46,10 @@ namespace TetAIDotNET
                 Stopwatch stopwatch = new Stopwatch();
                 while (true)
                 {
+                    stopwatch.Restart();
                     var result = environment.Search();
                     var printrsult = result;
 
-                    stopwatch.Restart();
                     var count = Digit(result);
 
                     for (int i = 0; i < count; i++)
@@ -57,8 +57,8 @@ namespace TetAIDotNET
                         environment.UserInput((Action)(result % 10));
                         result /= 10;
 
-                    environment.PrintGame();
                     }
+                    environment.PrintGame();
                     //Thread.Sleep(100);
 
                     stopwatch.Stop();
