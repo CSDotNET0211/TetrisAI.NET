@@ -22,7 +22,7 @@ namespace TetAIDotNET
                     var x = Mino.GetPosition(pos, i, true);
                     var y = Mino.GetPosition(pos, i, false);
 
-                    fieldclone.Set(x+y*10,true);
+                    fieldclone.Set(x + y * 10, true);
                 }
 
             }
@@ -54,7 +54,7 @@ namespace TetAIDotNET
             {
                 Console.WriteLine("ホールド");
                 if (hold != null)
-                    Console.WriteLine((MinoKind)hold);
+                    Console.WriteLine(((MinoKind)hold).ToString());
             }
         }
     }

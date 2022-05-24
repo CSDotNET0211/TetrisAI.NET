@@ -242,8 +242,8 @@ namespace TetAIDotNET
                 clearedValue +
                 (Weight[5] * holecount) +//穴の数に対する評価
                 (Weight[6] * bump) +
-                (Weight[7] * holecount * sumofheight) +
-                (Weight[8] * bump * sumofheight);//穴の数を２乗した評価
+                (Weight[7] * holecount * sumofheight* sumofheight) +
+                (Weight[8] * bump * sumofheight* sumofheight);//穴の数を２乗した評価
             // return (-0.51f * sumofheight) + (0.76f * cleared) + (-0.3566f * holecount) + (-0.1844f * bump);
 
             int GetValue(long value, int index)

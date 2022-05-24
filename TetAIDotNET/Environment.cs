@@ -482,7 +482,7 @@ namespace TetAIDotNET
         public void PrintGame()
         {
             Print.PrintGame(field, _nowMino.Position, _next, _nowHold);
-            Print.PrintGame(field, _nowMino.Position, _next, _nowHold);
+            //Print.PrintGame(field, _nowMino.Position, _next, _nowHold);
         }
         public void UserInput(Action action)
         {
