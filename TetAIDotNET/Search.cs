@@ -31,15 +31,15 @@ namespace TetAIDotNET
         /// <summary>
         /// 検索したパターンを中心hashをkeyとして収納
         /// </summary>
-        static Dictionary<long, Pattern> _searchedPatterns = new Dictionary<long, Pattern>(100);
+        static List<Dictionary<long, Pattern>> _searchedPatterns = new List<Dictionary<long, Pattern>>(100);
         /// <summary>
         /// ミノ位置をそれぞれ保持して重複を最小限に
         /// </summary>
-        static List<HashSet<long>> _passedTreeRoute = new List<HashSet<long>>();
+        static List<HashSet<long>> _passedTreeRoutes = new List<HashSet<long>>();
         //   static List<Pattern> _patterns = new List<Pattern>();
         static Pattern? _best = null;
 
-        public static List<BitArray> _fields = new List<BitArray>();
+        public static List<List<BitArray>> _fields = new List<List<BitArray>>();
 
         public static long Get(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field, int nextCount)
         {
@@ -47,19 +47,24 @@ namespace TetAIDotNET
             for (int i = 0; i < nextCount; i++)
                 nextint = (int)nexts[i] * (10 * (nextCount - i - 1));
 
+            int holdint = hold == null ? -1 : (int)hold;
+
             //   nextint = (int)nexts[0];
             _searchedPatterns.Clear();
             //   _patterns.Clear();
             _fields.Clear();
-            _passedTreeRoute.Clear();
+            _passedTreeRoutes.Clear();
             _best = null;
 
-            GetBest((int)current, nextint, nextCount, hold, canHold, field, -1, 0,);
+            _passedTreeRoutes.Add(new HashSet<long>());
+            _searchedPatterns.Add(new Dictionary<long, Pattern>());
+            int taskIndex = 0;
+            GetBest((int)current, nextint, nextCount, holdint, canHold, field, -1, 0, ref taskIndex);
 
             return _best.Value.Move;
         }
 
-        public static void GetBest(int current, int next, int nextCount, MinoKind? hold, bool canHold, BitArray field, long firstMove, float beforeEval,ref int taskIndex)
+        public static void GetBest(int current, int next, int nextCount, int hold, bool canHold, BitArray field, long firstMove, float beforeEval, ref int taskIndex)
         {
             //  _passedTreeRoute.Clear();
 
@@ -68,9 +73,9 @@ namespace TetAIDotNET
             var mino = Environment.CreateMino((MinoKind)current);
 
             //検索関数に渡してパターンを列挙
-            SearchAndAddPatterns(mino, field, 0, 0, Action.Null, 0,ref taskIndex);
-            var patternsInThisMove = _searchedPatterns.Values.ToArray();
-            _searchedPatterns.Clear();
+            SearchAndAddPatterns(mino, field, 0, 0, Action.Null, 0, ref taskIndex);
+            var patternsInThisMove = _searchedPatterns[taskIndex].Values.ToArray();
+            _searchedPatterns[taskIndex].Clear();
 
             //ネクストカウントが0、つまり最後の先読みの場合最善手を更新して返す
             //上位２０個を持ってくる
@@ -160,21 +165,142 @@ namespace TetAIDotNET
                 newnext %= tempDiv;
                 //再帰
 
-                //    ThreadPool.QueueUserWorkItem(Get,)
                 if (firstMove == -1)
                 {
-                    _passedTreeRoute.Add(new HashSet<long>());
-                    taskIndex= _passedTreeRoute.Count-1;
+                    _passedTreeRoutes.Add(new HashSet<long>());
+                    _searchedPatterns.Add(new Dictionary<long, Pattern>());
+                    taskIndex = _passedTreeRoutes.Count - 1;
+                    _fields.Add(new List<BitArray>());
+
+                    var args = new ClassForThreadArgs(newcurrent, newnext, nextCount - 1, hold, canHold, _fields[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval, taskIndex);
+                    ThreadPool.QueueUserWorkItem(new WaitCallback(GetBest), args);
+                }
+                else
+                    GetBest(newcurrent, newnext, nextCount - 1, hold, canHold, _fields[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval, ref taskIndex);
+
+
+
+            }
+        }
+
+        public static void GetBest(object param)
+        {
+            object[] args = param as object[];
+            int current = (int)args[0];
+            int next = (int)args[1];
+            int nextCount = (int)args[2];
+            int hold = (int)args[3];
+            bool canHold = (bool)args[4];
+            BitArray field = (BitArray)args[5];
+            long firstMove = (long)args[6];
+            float beforeEval = (float)args[7];
+            int taskIndex = (int)args[8];
+
+            //  _passedTreeRoute.Clear();
+
+
+            //ミノの種類からミノ情報作成
+            var mino = Environment.CreateMino((MinoKind)current);
+
+            //検索関数に渡してパターンを列挙
+            SearchAndAddPatterns(mino, field, 0, 0, Action.Null, 0, ref taskIndex);
+            var patternsInThisMove = _searchedPatterns[taskIndex].Values.ToArray();
+            _searchedPatterns[taskIndex].Clear();
+
+            //ネクストカウントが0、つまり最後の先読みの場合最善手を更新して返す
+            //上位２０個を持ってくる
+            if (nextCount == 0)
+            {
+                Pattern? best = null;
+
+                //20より大きい場合はソートして上位の順番で再帰
+                //これ小さい順じゃね？
+                int beemWidth;
+                if (patternsInThisMove.Length < 10)
+                    beemWidth = patternsInThisMove.Length;
+                else
+                {
+
+                    Array.Sort(patternsInThisMove, ISortPattern.GetInstance());
+                    beemWidth = 10;
                 }
 
+                //パターンをソートしてビームサーチ
+                //  Array.Sort(patternindexs,ISortPattern.GetInstance());
 
-                GetBest(newcurrent, newnext, nextCount - 1, hold, canHold, _fields[patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval,ref taskIndex);
+
+
+                for (int beem = 0; beem < beemWidth; beem++)
+                {
+                    patternsInThisMove[beem].Eval += beforeEval;
+
+                    //一手ずつ確認
+                    // Print.PrintGame(_fields[ patternsInThisMove[beem].FieldIndex], -1, null, null, patternsInThisMove[beem].Eval);
+                    //Console.ReadKey();
+
+                    long first;
+                    if (firstMove == -1)
+                        first = patternsInThisMove[beem].Move;
+                    else
+                        first = firstMove;
+
+                    //１つの最終的な手の中で最も良い手が存在しないか今の手がより良い評価だった場合は交換
+                    if (best == null || patternsInThisMove[beem].Eval > ((Pattern)best).Eval)
+                    {
+                        patternsInThisMove[beem].Move = first;
+                        best = patternsInThisMove[beem];
+                    }
+                }
+
+                //全体の最終的な手の中で最も良いものを取る
+                if (_best == null || best.Value.Eval > _best.Value.Eval)
+                    _best = best;
+                return;
+            }
+
+            //複製したフィールドに適用して再帰
+            //上位２０個
+
+            //20より大きい場合はソートして再帰
+            int beemWidth2;
+            if (patternsInThisMove.Length <= 10)
+                beemWidth2 = patternsInThisMove.Length;
+            else
+            {
+                beemWidth2 = 10;
+                Array.Sort(patternsInThisMove, ISortPattern.GetInstance());
+            }
+
+            //firstMoveがない＝最初の検索の場合、スレッドを起動する
+            for (int beem = 0; beem < beemWidth2; beem++)
+            {
+                patternsInThisMove[beem].Eval += beforeEval;
+
+                //最初の行動のみ保存
+                long first;
+                if (firstMove == -1)
+                    first = patternsInThisMove[beem].Move;
+                else
+                    first = firstMove;
+
+                int newcurrent = next;
+                int newnext = next;
+                int tempDiv = 10;
+                for (int i = 0; i < nextCount - 1; i++)
+                {
+                    newcurrent /= 10;
+                    tempDiv *= 10;
+                }
+
+                newnext %= tempDiv;
+                //再帰
+
+                GetBest(newcurrent, newnext, nextCount - 1, hold, canHold, _fields[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval, ref taskIndex);
             }
         }
 
 
-
-        static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, long move, Action lockDirection, int rotateCount,ref int taskIndex)
+        static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, long move, Action lockDirection, int rotateCount, ref int taskIndex)
         {
             //ハードドロップ
             {
@@ -205,9 +331,9 @@ namespace TetAIDotNET
 
 
                 //
-                if (_searchedPatterns.TryGetValue(hash, out value))
+                if (_searchedPatterns[taskIndex].TryGetValue(hash, out value))
                 {
-                    _searchedPatterns.Remove(hash);
+                    _searchedPatterns[taskIndex].Remove(hash);
 
                     //行動回数が少ないやつ
                     if (value.MoveCount > moveCount)
@@ -216,7 +342,7 @@ namespace TetAIDotNET
                         value.Move = move + tempmove;
                     }
 
-                    _searchedPatterns.Add(hash, value);
+                    _searchedPatterns[taskIndex].Add(hash, value);
                 }
                 else
                 {
@@ -239,10 +365,10 @@ namespace TetAIDotNET
                     int clearedLine = Environment.CheckAndClearLine(fieldclone);
                     pattern.Eval = Evaluation.NewEvaluate(fieldclone, clearedLine);
 
-                    _fields.Add(fieldclone);
+                    _fields[taskIndex].Add(fieldclone);
                     pattern.FieldIndex = _fields.Count - 1;
 
-                    _searchedPatterns.Add(hash, pattern);
+                    _searchedPatterns[taskIndex].Add(hash, pattern);
                 }
             }
 
@@ -252,7 +378,7 @@ namespace TetAIDotNET
             {
                 var newmino = mino;
 
-                if (!IsPassedBefore(mino.MinoKind, mino.Position, Vector2.mx1.x, Vector2.mx1.y, mino.Rotation, true))
+                if (!IsPassedBefore(mino.MinoKind, mino.Position, Vector2.mx1.x, Vector2.mx1.y, mino.Rotation, true, ref taskIndex))
                 {
                     newmino.Move(Vector2.mx1.x, Vector2.mx1.y);
 
@@ -260,7 +386,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveLeft, rotateCount);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveLeft, rotateCount, ref taskIndex);
                 }
             }
 
@@ -269,7 +395,7 @@ namespace TetAIDotNET
             {
                 var newmino = mino;
 
-                if (!IsPassedBefore(mino.MinoKind, mino.Position, Vector2.x1.x, Vector2.x1.y, mino.Rotation, true))
+                if (!IsPassedBefore(mino.MinoKind, mino.Position, Vector2.x1.x, Vector2.x1.y, mino.Rotation, true, ref taskIndex))
                 {
                     newmino.Move(Vector2.x1.x, Vector2.x1.y);
 
@@ -277,7 +403,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveRight, rotateCount);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveRight, rotateCount, ref taskIndex);
                 }
             }
 
@@ -292,7 +418,7 @@ namespace TetAIDotNET
                 Rotation newrotation = 0;
                 Environment.GetNextRotateEnum(Rotate.Right, ref newrotation);
 
-                if (!IsPassedBefore(mino.MinoKind, mino.Position, vec.x, vec.y, newrotation, true))
+                if (!IsPassedBefore(mino.MinoKind, mino.Position, vec.x, vec.y, newrotation, true, ref taskIndex))
                 {
                     newmino.Move(vec.x, vec.y);
                     Environment.SimpleRotate(Rotate.Right, ref newmino, 0);
@@ -301,7 +427,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1, ref taskIndex);
                 }
             }
 
@@ -314,7 +440,7 @@ namespace TetAIDotNET
                 Rotation newrotation = 0;
                 Environment.GetNextRotateEnum(Rotate.Left, ref newrotation);
 
-                if (!IsPassedBefore(mino.MinoKind, mino.Position, vec.x, vec.y, newrotation, true))
+                if (!IsPassedBefore(mino.MinoKind, mino.Position, vec.x, vec.y, newrotation, true, ref taskIndex))
                 {
                     newmino.Move(vec.x, vec.y);
                     Environment.SimpleRotate(Rotate.Left, ref newmino, 0);
@@ -323,7 +449,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1, ref taskIndex);
                 }
             }
 
@@ -340,7 +466,7 @@ namespace TetAIDotNET
         /// <param name="newrotation"></param>
         /// <param name="ApplyHistory"></param>
         /// <returns></returns>
-        static private bool IsPassedBefore(MinoKind kind, long pos, int x, int y, Rotation newrotation, bool ApplyHistory)
+        static private bool IsPassedBefore(MinoKind kind, long pos, int x, int y, Rotation newrotation, bool ApplyHistory, ref int taskIndex)
         {
             //    pos += y;
             //    pos += x * 100;
@@ -348,12 +474,12 @@ namespace TetAIDotNET
             Mino.AddAllPosition(ref pos, x, y);
             var hash = GetHashForPosition(kind, newrotation, pos);
 
-            bool result = _passedTreeRoute.Contains(hash);
+            bool result = _passedTreeRoutes[taskIndex].Contains(hash);
             if (result)
                 return true;
 
             if (ApplyHistory)
-                _passedTreeRoute.Add(hash);
+                _passedTreeRoutes[taskIndex].Add(hash);
 
             return false;
 
