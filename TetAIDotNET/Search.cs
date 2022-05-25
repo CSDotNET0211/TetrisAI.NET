@@ -40,7 +40,7 @@ namespace TetAIDotNET
         static Pattern? _best = null;
 
         public static List<List<BitArray>> _fields = new List<List<BitArray>>();
-
+        static ManualResetEvent _resetEvent = new ManualResetEvent(false);
         public static long Get(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field, int nextCount)
         {
             int nextint = 0;
