@@ -37,10 +37,11 @@ namespace TetAIDotNET
         /// </summary>
         static List<HashSet<long>> _passedTreeRoutes = new List<HashSet<long>>();
         //   static List<Pattern> _patterns = new List<Pattern>();
+        [ThreadStatic]
         static Pattern? _best = null;
 
         public static List<List<BitArray>> _fields = new List<List<BitArray>>();
-        static ManualResetEvent _resetEvent = new ManualResetEvent(false);
+        static List<ManualResetEvent> _resetEvent = new List<ManualResetEvent>();
         public static long Get(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field, int nextCount)
         {
             int nextint = 0;
@@ -49,6 +50,7 @@ namespace TetAIDotNET
 
             int holdint = hold == null ? -1 : (int)hold;
 
+            interlock.
             //   nextint = (int)nexts[0];
             _searchedPatterns.Clear();
             //   _patterns.Clear();
@@ -122,9 +124,22 @@ namespace TetAIDotNET
                     }
                 }
 
+
                 //全体の最終的な手の中で最も良いものを取る
                 if (_best == null || best.Value.Eval > _best.Value.Eval)
-                    _best = best;
+                {
+                    lock (_best )
+                    {
+                        _best = best;
+                    }
+                }
+
+
+                if (taskIndex != 0)
+                {
+                    _resetEvent[taskIndex - 1].Set();
+                }
+
                 return;
             }
 
@@ -169,6 +184,7 @@ namespace TetAIDotNET
                 {
                     _passedTreeRoutes.Add(new HashSet<long>());
                     _searchedPatterns.Add(new Dictionary<long, Pattern>());
+                    _resetEvent.Add(new ManualResetEvent(false));
                     taskIndex = _passedTreeRoutes.Count - 1;
                     _fields.Add(new List<BitArray>());
 
