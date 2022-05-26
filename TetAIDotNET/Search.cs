@@ -37,7 +37,8 @@ namespace TetAIDotNET
         /// </summary>
         static List<HashSet<long>> _passedTreeRoutes = new List<HashSet<long>>();
         //   static List<Pattern> _patterns = new List<Pattern>();
-        [ThreadStatic]
+      
+      static  object _lock = new object();
         static Pattern? _best = null;
 
         public static List<List<BitArray>> _fields = new List<List<BitArray>>();
@@ -50,7 +51,6 @@ namespace TetAIDotNET
 
             int holdint = hold == null ? -1 : (int)hold;
 
-            interlock.
             //   nextint = (int)nexts[0];
             _searchedPatterns.Clear();
             //   _patterns.Clear();
@@ -128,7 +128,7 @@ namespace TetAIDotNET
                 //全体の最終的な手の中で最も良いものを取る
                 if (_best == null || best.Value.Eval > _best.Value.Eval)
                 {
-                    lock (_best )
+                    lock (_lock)
                     {
                         _best = best;
                     }
