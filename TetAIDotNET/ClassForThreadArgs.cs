@@ -9,14 +9,17 @@ namespace TetAIDotNET
 {
     internal class ClassForThreadArgs
     {
-        public ClassForThreadArgs(int current,int next,int nextCount,int hold,bool canHold,BitArray field,long first,float eval,int taskIndex)
+        /// <summary>
+        /// 変数群をオブジェクトに変換するだけ
+        /// </summary>
+        public ClassForThreadArgs(int current,int next,int nextCount,int hold,bool canHold,int fieldIndex,long first,float eval,int taskIndex)
         {
             Current=current;    
             Next=next;
             NextCount=nextCount;    
             Hold=hold;
             CanHold=canHold;
-            Field=field;
+            FieldIndex=fieldIndex;
             First=first;
             Eval=eval;
             TaskIndex=taskIndex;
@@ -29,7 +32,7 @@ namespace TetAIDotNET
         public int NextCount;
         public int Hold;
         public bool CanHold;
-        public BitArray Field;
+        public int FieldIndex;
         public long First;
         public float Eval;
         public int TaskIndex;

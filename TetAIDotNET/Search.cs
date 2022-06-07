@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +19,8 @@ namespace TetAIDotNET
         public float Eval;
         public int MoveCount;
         public int FieldIndex;
+
+
     }
 
     /// <summary>
@@ -31,20 +34,22 @@ namespace TetAIDotNET
         /// <summary>
         /// 検索したパターンを中心hashをkeyとして収納
         /// </summary>
-        static List<Dictionary<long, Pattern>> _searchedPatterns = new List<Dictionary<long, Pattern>>(100);
+        static List<Dictionary<long, Pattern>> _searchedPatterns = new List<Dictionary<long, Pattern>>();
         /// <summary>
         /// ミノ位置をそれぞれ保持して重複を最小限に
         /// </summary>
         static List<HashSet<long>> _passedTreeRoutes = new List<HashSet<long>>();
-        //   static List<Pattern> _patterns = new List<Pattern>();
-      
-      static  object _lock = new object();
+        static List<Pattern?> _bestInThread = new List<Pattern?>();
+
         static Pattern? _best = null;
+        static int _threadCount;
 
         public static List<List<BitArray>> _fields = new List<List<BitArray>>();
-        static List<ManualResetEvent> _resetEvent = new List<ManualResetEvent>();
+        static ManualResetEvent _resetEvent;
+        static int _remainThreadCount;
         public static long Get(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field, int nextCount)
         {
+            _resetEvent = new ManualResetEvent(false);
             int nextint = 0;
             for (int i = 0; i < nextCount; i++)
                 nextint = (int)nexts[i] * (10 * (nextCount - i - 1));
@@ -58,23 +63,26 @@ namespace TetAIDotNET
             _passedTreeRoutes.Clear();
             _best = null;
 
+            _threadCount = 1;
             _passedTreeRoutes.Add(new HashSet<long>());
             _searchedPatterns.Add(new Dictionary<long, Pattern>());
+            _fields.Add(new List<BitArray>());
             int taskIndex = 0;
             GetBest((int)current, nextint, nextCount, holdint, canHold, field, -1, 0, ref taskIndex);
+
+            _resetEvent.WaitOne();
+
+
 
             return _best.Value.Move;
         }
 
         public static void GetBest(int current, int next, int nextCount, int hold, bool canHold, BitArray field, long firstMove, float beforeEval, ref int taskIndex)
         {
-            //  _passedTreeRoute.Clear();
-
-
             //ミノの種類からミノ情報作成
             var mino = Environment.CreateMino((MinoKind)current);
 
-            //検索関数に渡してパターンを列挙
+            //検索関数に渡してパターンを列挙 
             SearchAndAddPatterns(mino, field, 0, 0, Action.Null, 0, ref taskIndex);
             var patternsInThisMove = _searchedPatterns[taskIndex].Values.ToArray();
             _searchedPatterns[taskIndex].Clear();
@@ -86,30 +94,18 @@ namespace TetAIDotNET
                 Pattern? best = null;
 
                 //20より大きい場合はソートして上位の順番で再帰
-                //これ小さい順じゃね？
                 int beemWidth;
                 if (patternsInThisMove.Length < 10)
                     beemWidth = patternsInThisMove.Length;
                 else
                 {
-
                     Array.Sort(patternsInThisMove, ISortPattern.GetInstance());
                     beemWidth = 10;
                 }
 
-                //パターンをソートしてビームサーチ
-                //  Array.Sort(patternindexs,ISortPattern.GetInstance());
-
-
-
                 for (int beem = 0; beem < beemWidth; beem++)
                 {
                     patternsInThisMove[beem].Eval += beforeEval;
-
-                    //一手ずつ確認
-                    // Print.PrintGame(_fields[ patternsInThisMove[beem].FieldIndex], -1, null, null, patternsInThisMove[beem].Eval);
-                    //Console.ReadKey();
-
                     long first;
                     if (firstMove == -1)
                         first = patternsInThisMove[beem].Move;
@@ -117,202 +113,114 @@ namespace TetAIDotNET
                         first = firstMove;
 
                     //１つの最終的な手の中で最も良い手が存在しないか今の手がより良い評価だった場合は交換
-                    if (best == null || patternsInThisMove[beem].Eval > ((Pattern)best).Eval)
-                    {
-                        patternsInThisMove[beem].Move = first;
-                        best = patternsInThisMove[beem];
-                    }
+                    //最後の手は行動だけ変えとけばいいか
+                    Utility.ReplaceToBetterUpdateOnlyMove(ref best, patternsInThisMove[beem], first);
                 }
 
-
-                //全体の最終的な手の中で最も良いものを取る
-                if (_best == null || best.Value.Eval > _best.Value.Eval)
+                //評価が高ければ更新
+                if (taskIndex == 0)
                 {
-                    lock (_lock)
-                    {
-                        _best = best;
-                    }
+                    Utility.ReplaceToBetter(ref _best, (Pattern)best);
+
+                    _resetEvent.Set();
                 }
-
-
-                if (taskIndex != 0)
+                else
                 {
-                    _resetEvent[taskIndex - 1].Set();
-                }
+                    Utility.ReplaceToBetter(_bestInThread, taskIndex, (Pattern)best);
 
-                return;
+                    if (Interlocked.Decrement(ref _remainThreadCount) == 0)
+                        _resetEvent.Set();
+                }
             }
-
-            //複製したフィールドに適用して再帰
-            //上位２０個
-
-            //20より大きい場合はソートして再帰
-            int beemWidth2;
-            if (patternsInThisMove.Length <= 10)
-                beemWidth2 = patternsInThisMove.Length;
             else
             {
-                beemWidth2 = 10;
-                Array.Sort(patternsInThisMove, ISortPattern.GetInstance());
+                //複製したフィールドに適用して再帰
+                //上位２０個
+
+                //20より大きい場合はソートして再帰
+                int beemWidth;
+                if (patternsInThisMove.Length <= 10)
+                    beemWidth = patternsInThisMove.Length;
+                else
+                {
+                    beemWidth = 10;
+                    Array.Sort(patternsInThisMove, ISortPattern.GetInstance());
+                }
+
+                //全スレッドの終了通知に使用
+                if (taskIndex == 0)
+                {
+                    _remainThreadCount = beemWidth;
+                   
+                }
+                //firstMoveがない＝最初の検索の場合、スレッドを起動する
+                for (int beem = 0; beem < beemWidth; beem++)
+                {
+                    patternsInThisMove[beem].Eval += beforeEval;
+
+                    //最初の行動のみ保存
+                    long first;
+                    if (firstMove == -1)
+                        first = patternsInThisMove[beem].Move;
+                    else
+                        first = firstMove;
+
+                    int newcurrent = next;
+                    int newnext = next;
+                    int tempDiv = 10;
+                    for (int i = 0; i < nextCount - 1; i++)
+                    {
+                        newcurrent /= 10;
+                        tempDiv *= 10;
+                    }
+
+                    newnext %= tempDiv;
+
+                    //再帰
+                    if (firstMove == -1)
+                    {
+                        PrepareThread();
+                        taskIndex = _threadCount;
+                        _threadCount++;
+
+                        var args = new ClassForThreadArgs(newcurrent, newnext, nextCount - 1, hold, canHold, patternsInThisMove[beem].FieldIndex, first, patternsInThisMove[beem].Eval, taskIndex);
+                        ThreadPool.QueueUserWorkItem(GetBest, args);
+                    }
+                    else
+                        GetBest(newcurrent, newnext, nextCount - 1, hold, canHold, _fields[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval, ref taskIndex);
+
+
+
+                }
             }
 
-            //firstMoveがない＝最初の検索の場合、スレッドを起動する
-            for (int beem = 0; beem < beemWidth2; beem++)
+            void PrepareThread()
             {
-                patternsInThisMove[beem].Eval += beforeEval;
-
-                //最初の行動のみ保存
-                long first;
-                if (firstMove == -1)
-                    first = patternsInThisMove[beem].Move;
-                else
-                    first = firstMove;
-
-                int newcurrent = next;
-                int newnext = next;
-                int tempDiv = 10;
-                for (int i = 0; i < nextCount - 1; i++)
-                {
-                    newcurrent /= 10;
-                    tempDiv *= 10;
-                }
-
-                newnext %= tempDiv;
-                //再帰
-
-                if (firstMove == -1)
-                {
-                    _passedTreeRoutes.Add(new HashSet<long>());
-                    _searchedPatterns.Add(new Dictionary<long, Pattern>());
-                    _resetEvent.Add(new ManualResetEvent(false));
-                    taskIndex = _passedTreeRoutes.Count - 1;
-                    _fields.Add(new List<BitArray>());
-
-                    var args = new ClassForThreadArgs(newcurrent, newnext, nextCount - 1, hold, canHold, _fields[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval, taskIndex);
-                    ThreadPool.QueueUserWorkItem(new WaitCallback(GetBest), args);
-                }
-                else
-                    GetBest(newcurrent, newnext, nextCount - 1, hold, canHold, _fields[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval, ref taskIndex);
-
-
+                _passedTreeRoutes.Add(new HashSet<long>());
+                _searchedPatterns.Add(new Dictionary<long, Pattern>());
+                _fields.Add(new List<BitArray>());
 
             }
         }
 
+        //
+
         public static void GetBest(object param)
         {
-            object[] args = param as object[];
-            int current = (int)args[0];
-            int next = (int)args[1];
-            int nextCount = (int)args[2];
-            int hold = (int)args[3];
-            bool canHold = (bool)args[4];
-            BitArray field = (BitArray)args[5];
-            long firstMove = (long)args[6];
-            float beforeEval = (float)args[7];
-            int taskIndex = (int)args[8];
+            var args = param as ClassForThreadArgs;
+            int current = args.Current;
+            int next = args.Next;
+            int nextCount = args.NextCount;
+            int hold = args.Hold;
+            bool canHold = args.CanHold;
+            int fieldIndex = args.FieldIndex;
+            long firstMove = args.First;
+            float beforeEval = args.Eval;
+            int taskIndex = args.TaskIndex;
 
-            //  _passedTreeRoute.Clear();
-
-
-            //ミノの種類からミノ情報作成
-            var mino = Environment.CreateMino((MinoKind)current);
-
-            //検索関数に渡してパターンを列挙
-            SearchAndAddPatterns(mino, field, 0, 0, Action.Null, 0, ref taskIndex);
-            var patternsInThisMove = _searchedPatterns[taskIndex].Values.ToArray();
-            _searchedPatterns[taskIndex].Clear();
-
-            //ネクストカウントが0、つまり最後の先読みの場合最善手を更新して返す
-            //上位２０個を持ってくる
-            if (nextCount == 0)
-            {
-                Pattern? best = null;
-
-                //20より大きい場合はソートして上位の順番で再帰
-                //これ小さい順じゃね？
-                int beemWidth;
-                if (patternsInThisMove.Length < 10)
-                    beemWidth = patternsInThisMove.Length;
-                else
-                {
-
-                    Array.Sort(patternsInThisMove, ISortPattern.GetInstance());
-                    beemWidth = 10;
-                }
-
-                //パターンをソートしてビームサーチ
-                //  Array.Sort(patternindexs,ISortPattern.GetInstance());
+            GetBest(current, next, nextCount - 1, hold, canHold, _fields[taskIndex][fieldIndex], firstMove, beforeEval, ref taskIndex);
 
 
-
-                for (int beem = 0; beem < beemWidth; beem++)
-                {
-                    patternsInThisMove[beem].Eval += beforeEval;
-
-                    //一手ずつ確認
-                    // Print.PrintGame(_fields[ patternsInThisMove[beem].FieldIndex], -1, null, null, patternsInThisMove[beem].Eval);
-                    //Console.ReadKey();
-
-                    long first;
-                    if (firstMove == -1)
-                        first = patternsInThisMove[beem].Move;
-                    else
-                        first = firstMove;
-
-                    //１つの最終的な手の中で最も良い手が存在しないか今の手がより良い評価だった場合は交換
-                    if (best == null || patternsInThisMove[beem].Eval > ((Pattern)best).Eval)
-                    {
-                        patternsInThisMove[beem].Move = first;
-                        best = patternsInThisMove[beem];
-                    }
-                }
-
-                //全体の最終的な手の中で最も良いものを取る
-                if (_best == null || best.Value.Eval > _best.Value.Eval)
-                    _best = best;
-                return;
-            }
-
-            //複製したフィールドに適用して再帰
-            //上位２０個
-
-            //20より大きい場合はソートして再帰
-            int beemWidth2;
-            if (patternsInThisMove.Length <= 10)
-                beemWidth2 = patternsInThisMove.Length;
-            else
-            {
-                beemWidth2 = 10;
-                Array.Sort(patternsInThisMove, ISortPattern.GetInstance());
-            }
-
-            //firstMoveがない＝最初の検索の場合、スレッドを起動する
-            for (int beem = 0; beem < beemWidth2; beem++)
-            {
-                patternsInThisMove[beem].Eval += beforeEval;
-
-                //最初の行動のみ保存
-                long first;
-                if (firstMove == -1)
-                    first = patternsInThisMove[beem].Move;
-                else
-                    first = firstMove;
-
-                int newcurrent = next;
-                int newnext = next;
-                int tempDiv = 10;
-                for (int i = 0; i < nextCount - 1; i++)
-                {
-                    newcurrent /= 10;
-                    tempDiv *= 10;
-                }
-
-                newnext %= tempDiv;
-                //再帰
-
-                GetBest(newcurrent, newnext, nextCount - 1, hold, canHold, _fields[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval, ref taskIndex);
-            }
         }
 
 

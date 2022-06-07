@@ -33,7 +33,7 @@ namespace TetAIDotNET
 
             ThreadPool.SetMinThreads(0, 0);
             ThreadPool.SetMaxThreads(CPU_THREADCOUNT, 0);
-            DefaultSearch._semaphore = new SemaphoreSlim(0, CPU_THREADCOUNT);
+      //      DefaultSearch._semaphore = new SemaphoreSlim(0, CPU_THREADCOUNT);
 
                Console.WriteLine($"MAXThread Worker:{worker},IO:{io}\n");
             Console.WriteLine("CPUのスレッド数:" + CPU_THREADCOUNT);
