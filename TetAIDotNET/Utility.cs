@@ -32,7 +32,7 @@ namespace TetAIDotNET
 
         static public void ReplaceToBetter(List<Pattern?> list, int bestIndex, Pattern test)
         {
-            if (list[bestIndex] == null || test.Eval > ((Pattern)list[bestIndex]).Eval)
+            if (list[bestIndex] == null|| test.Eval > ((Pattern)list[bestIndex]).Eval)
                 list[bestIndex] = test;
         }
     }

@@ -62,6 +62,7 @@ namespace TetAIDotNET
             _fieldsList.Clear();
             _passedTreeRoutesList.Clear();
             _best = null;
+            _bestInThreadList.Clear();
 
             _threadCount = 1;
             _passedTreeRoutesList.Add(new HashSet<long>());
@@ -183,7 +184,7 @@ namespace TetAIDotNET
                         _threadCount++;
                         taskIndex = _threadCount - 1;
 
-                        var args = new ClassForThreadArgs(newcurrent, newnext, nextCount - 1, hold, canHold, patternsInThisMove[beem].FieldIndex, first, patternsInThisMove[beem].Eval, taskIndex);
+                        var args = new ClassForThreadArgs(newcurrent, newnext, nextCount - 1, hold, canHold, _fieldsList[0][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval, taskIndex);
                         ThreadPool.QueueUserWorkItem(GetBest, args);
                     }
                     else
@@ -213,12 +214,12 @@ namespace TetAIDotNET
             int nextCount = args.NextCount;
             int hold = args.Hold;
             bool canHold = args.CanHold;
-            int fieldIndex = args.FieldIndex;
+            BitArray field = args.Field;
             long firstMove = args.First;
             float beforeEval = args.Eval;
             int taskIndex = args.TaskIndex;
 
-            GetBest(current, next, nextCount - 1, hold, canHold, _fieldsList[taskIndex][fieldIndex], firstMove, beforeEval, ref taskIndex);
+            GetBest(current, next, nextCount - 1, hold, canHold, field, firstMove, beforeEval, ref taskIndex);
 
 
         }
