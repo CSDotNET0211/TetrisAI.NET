@@ -476,7 +476,7 @@ namespace TetAIDotNET
 
         public long Search()
         {
-            return DefaultSearch.Get(_nowMino.MinoKind, _next, _nowHold, _canHold, field,2);
+            return BeemSearch.GetBestMove(_nowMino.MinoKind, _next, _nowHold, _canHold, field,2);
         }
 
         public void PrintGame()

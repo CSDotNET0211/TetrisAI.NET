@@ -26,7 +26,7 @@ namespace TetAIDotNET
     /// <summary>
     /// 通常の探索（全探索）
     /// </summary>
-    class DefaultSearch
+    class BeemSearch
     {
         //keyがIndexを表しているtet
 
@@ -34,20 +34,20 @@ namespace TetAIDotNET
         /// <summary>
         /// 検索したパターンを中心hashをkeyとして収納
         /// </summary>
-        static List<Dictionary<long, Pattern>> _searchedPatterns = new List<Dictionary<long, Pattern>>();
+        static List<Dictionary<long, Pattern>> _searchedPatternsList = new List<Dictionary<long, Pattern>>();
         /// <summary>
         /// ミノ位置をそれぞれ保持して重複を最小限に
         /// </summary>
-        static List<HashSet<long>> _passedTreeRoutes = new List<HashSet<long>>();
-        static List<Pattern?> _bestInThread = new List<Pattern?>();
+        static List<HashSet<long>> _passedTreeRoutesList = new List<HashSet<long>>();
+        static List<Pattern?> _bestInThreadList = new List<Pattern?>();
 
         static Pattern? _best = null;
         static int _threadCount;
 
-        public static List<List<BitArray>> _fields = new List<List<BitArray>>();
+        public static List<List<BitArray>> _fieldsList = new List<List<BitArray>>();
         static ManualResetEvent _resetEvent;
         static int _remainThreadCount;
-        public static long Get(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field, int nextCount)
+        public static long GetBestMove(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field, int nextCount)
         {
             _resetEvent = new ManualResetEvent(false);
             int nextint = 0;
@@ -57,16 +57,16 @@ namespace TetAIDotNET
             int holdint = hold == null ? -1 : (int)hold;
 
             //   nextint = (int)nexts[0];
-            _searchedPatterns.Clear();
+            _searchedPatternsList.Clear();
             //   _patterns.Clear();
-            _fields.Clear();
-            _passedTreeRoutes.Clear();
+            _fieldsList.Clear();
+            _passedTreeRoutesList.Clear();
             _best = null;
 
             _threadCount = 1;
-            _passedTreeRoutes.Add(new HashSet<long>());
-            _searchedPatterns.Add(new Dictionary<long, Pattern>());
-            _fields.Add(new List<BitArray>());
+            _passedTreeRoutesList.Add(new HashSet<long>());
+            _searchedPatternsList.Add(new Dictionary<long, Pattern>());
+            _fieldsList.Add(new List<BitArray>());
             int taskIndex = 0;
             GetBest((int)current, nextint, nextCount, holdint, canHold, field, -1, 0, ref taskIndex);
 
@@ -84,8 +84,8 @@ namespace TetAIDotNET
 
             //検索関数に渡してパターンを列挙 
             SearchAndAddPatterns(mino, field, 0, 0, Action.Null, 0, ref taskIndex);
-            var patternsInThisMove = _searchedPatterns[taskIndex].Values.ToArray();
-            _searchedPatterns[taskIndex].Clear();
+            var patternsInThisMove = _searchedPatternsList[taskIndex].Values.ToArray();
+            _searchedPatternsList[taskIndex].Clear();
 
             //ネクストカウントが0、つまり最後の先読みの場合最善手を更新して返す
             //上位２０個を持ってくる
@@ -126,7 +126,7 @@ namespace TetAIDotNET
                 }
                 else
                 {
-                    Utility.ReplaceToBetter(_bestInThread, taskIndex, (Pattern)best);
+                    Utility.ReplaceToBetter(_bestInThreadList, taskIndex, (Pattern)best);
 
                     if (Interlocked.Decrement(ref _remainThreadCount) == 0)
                         _resetEvent.Set();
@@ -149,10 +149,8 @@ namespace TetAIDotNET
 
                 //全スレッドの終了通知に使用
                 if (taskIndex == 0)
-                {
                     _remainThreadCount = beemWidth;
-                   
-                }
+
                 //firstMoveがない＝最初の検索の場合、スレッドを起動する
                 for (int beem = 0; beem < beemWidth; beem++)
                 {
@@ -179,15 +177,17 @@ namespace TetAIDotNET
                     //再帰
                     if (firstMove == -1)
                     {
+                        //firstMoveが-1＝＝探索を１度もやっていない場合ここに条件分岐
+
                         PrepareThread();
-                        taskIndex = _threadCount;
                         _threadCount++;
+                        taskIndex = _threadCount - 1;
 
                         var args = new ClassForThreadArgs(newcurrent, newnext, nextCount - 1, hold, canHold, patternsInThisMove[beem].FieldIndex, first, patternsInThisMove[beem].Eval, taskIndex);
                         ThreadPool.QueueUserWorkItem(GetBest, args);
                     }
                     else
-                        GetBest(newcurrent, newnext, nextCount - 1, hold, canHold, _fields[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval, ref taskIndex);
+                        GetBest(newcurrent, newnext, nextCount - 1, hold, canHold, _fieldsList[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval, ref taskIndex);
 
 
 
@@ -196,9 +196,9 @@ namespace TetAIDotNET
 
             void PrepareThread()
             {
-                _passedTreeRoutes.Add(new HashSet<long>());
-                _searchedPatterns.Add(new Dictionary<long, Pattern>());
-                _fields.Add(new List<BitArray>());
+                _passedTreeRoutesList.Add(new HashSet<long>());
+                _searchedPatternsList.Add(new Dictionary<long, Pattern>());
+                _fieldsList.Add(new List<BitArray>());
 
             }
         }
@@ -218,7 +218,7 @@ namespace TetAIDotNET
             float beforeEval = args.Eval;
             int taskIndex = args.TaskIndex;
 
-            GetBest(current, next, nextCount - 1, hold, canHold, _fields[taskIndex][fieldIndex], firstMove, beforeEval, ref taskIndex);
+            GetBest(current, next, nextCount - 1, hold, canHold, _fieldsList[taskIndex][fieldIndex], firstMove, beforeEval, ref taskIndex);
 
 
         }
@@ -255,9 +255,9 @@ namespace TetAIDotNET
 
 
                 //
-                if (_searchedPatterns[taskIndex].TryGetValue(hash, out value))
+                if (_searchedPatternsList[taskIndex].TryGetValue(hash, out value))
                 {
-                    _searchedPatterns[taskIndex].Remove(hash);
+                    _searchedPatternsList[taskIndex].Remove(hash);
 
                     //行動回数が少ないやつ
                     if (value.MoveCount > moveCount)
@@ -266,7 +266,7 @@ namespace TetAIDotNET
                         value.Move = move + tempmove;
                     }
 
-                    _searchedPatterns[taskIndex].Add(hash, value);
+                    _searchedPatternsList[taskIndex].Add(hash, value);
                 }
                 else
                 {
@@ -289,10 +289,10 @@ namespace TetAIDotNET
                     int clearedLine = Environment.CheckAndClearLine(fieldclone);
                     pattern.Eval = Evaluation.NewEvaluate(fieldclone, clearedLine);
 
-                    _fields[taskIndex].Add(fieldclone);
-                    pattern.FieldIndex = _fields.Count - 1;
+                    _fieldsList[taskIndex].Add(fieldclone);
+                    pattern.FieldIndex = _fieldsList[taskIndex].Count - 1;
 
-                    _searchedPatterns[taskIndex].Add(hash, pattern);
+                    _searchedPatternsList[taskIndex].Add(hash, pattern);
                 }
             }
 
@@ -398,12 +398,12 @@ namespace TetAIDotNET
             Mino.AddAllPosition(ref pos, x, y);
             var hash = GetHashForPosition(kind, newrotation, pos);
 
-            bool result = _passedTreeRoutes[taskIndex].Contains(hash);
+            bool result = _passedTreeRoutesList[taskIndex].Contains(hash);
             if (result)
                 return true;
 
             if (ApplyHistory)
-                _passedTreeRoutes[taskIndex].Add(hash);
+                _passedTreeRoutesList[taskIndex].Add(hash);
 
             return false;
 
