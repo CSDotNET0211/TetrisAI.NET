@@ -69,10 +69,15 @@ namespace TetAIDotNET
             _searchedPatternsList.Add(new Dictionary<long, Pattern>());
             _fieldsList.Add(new List<BitArray>());
             int taskIndex = 0;
-            GetBest((int)current, nextint, nextCount, holdint, canHold, field, -1, 0, ref taskIndex);
+            GetBest((int)current, nextint, 1, holdint, canHold, field, -1, 0, ref taskIndex);
 
             _resetEvent.WaitOne();
 
+            foreach (var test in _bestInThreadList)
+            {
+                if (_best == null || _best.Value.Move < test.Value.Move)
+                    _best = test;
+            }
 
 
             return _best.Value.Move;
@@ -106,7 +111,7 @@ namespace TetAIDotNET
 
                 for (int beem = 0; beem < beemWidth; beem++)
                 {
-                    patternsInThisMove[beem].Eval += beforeEval;
+                    //patternsInThisMove[beem].Eval += beforeEval;
                     long first;
                     if (firstMove == -1)
                         first = patternsInThisMove[beem].Move;
@@ -200,7 +205,7 @@ namespace TetAIDotNET
                 _passedTreeRoutesList.Add(new HashSet<long>());
                 _searchedPatternsList.Add(new Dictionary<long, Pattern>());
                 _fieldsList.Add(new List<BitArray>());
-
+                _bestInThreadList.Add(null);
             }
         }
 
