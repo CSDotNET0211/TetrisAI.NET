@@ -85,8 +85,8 @@ namespace TetAIDotNET
 
         public static void GetBest(int current, int next, int nextCount, int hold, bool canHold, BitArray field, long firstMove, float beforeEval, ref int taskIndex)
         {
-            Console.WriteLine("スレッド:" + Thread.CurrentThread.ManagedThreadId);
-            Console.WriteLine("検索開始:" + Thread.CurrentThread.ManagedThreadId);
+            //     Console.WriteLine("スレッド:" + Thread.CurrentThread.ManagedThreadId);
+            //     Console.WriteLine("検索開始:" + Thread.CurrentThread.ManagedThreadId);
 
             //ミノの種類からミノ情報作成
             var mino = Environment.CreateMino((MinoKind)current);
@@ -96,7 +96,7 @@ namespace TetAIDotNET
             var patternsInThisMove = _searchedPatternsList[taskIndex].Values.ToArray();
             _searchedPatternsList[taskIndex].Clear();
 
-            Console.WriteLine("検索終了、次再帰準備開始:" + Thread.CurrentThread.ManagedThreadId);
+            //     Console.WriteLine("検索終了、次再帰準備開始:" + Thread.CurrentThread.ManagedThreadId);
             //ネクストカウントが0、つまり最後の先読みの場合最善手を更新して返す
             //上位２０個を持ってくる
             if (nextCount == 0)
@@ -195,7 +195,6 @@ namespace TetAIDotNET
 
                         var args = new ClassForThreadArgs(newcurrent, newnext, nextCount - 1, hold, canHold, _fieldsList[0][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval, taskIndex);
                         ThreadPool.QueueUserWorkItem(GetBest, args);
-                        Thread.Sleep(100000000);
                     }
                     else
                         GetBest(newcurrent, newnext, nextCount - 1, hold, canHold, _fieldsList[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval, ref taskIndex);
@@ -218,7 +217,7 @@ namespace TetAIDotNET
 
         public static void GetBest(object param)
         {
-            Console.WriteLine("スレッド開始:" + Thread.CurrentThread.ManagedThreadId);
+       //     Console.WriteLine("スレッド開始:" + Thread.CurrentThread.ManagedThreadId);
 
             var args = param as ClassForThreadArgs;
             int current = args.Current;
@@ -236,7 +235,7 @@ namespace TetAIDotNET
             if (Interlocked.Decrement(ref _remainThreadCount) == 0)
                 _resetEvent.Set();
 
-            Console.WriteLine("スレッド終了:" + Thread.CurrentThread.ManagedThreadId);
+            //  Console.WriteLine("スレッド終了:" + Thread.CurrentThread.ManagedThreadId);
         }
 
 
