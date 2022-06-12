@@ -58,9 +58,11 @@ namespace TetAIDotNET
 
             int holdint = hold == null ? -1 : (int)hold;
 
-            //   nextint = (int)nexts[0];
-            _searchedPatternsList.Clear();
-            //   _patterns.Clear();
+        _queue.TryAdd();
+
+
+   _searchedPatternsList.Clear();
+
             _fieldsList.Clear();
             _passedTreeRoutesList.Clear();
             _best = null;
