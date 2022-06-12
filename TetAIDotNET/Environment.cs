@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -139,6 +140,7 @@ namespace TetAIDotNET
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Move(int x = int.MaxValue, int y = int.MaxValue)
         {
 
@@ -196,6 +198,7 @@ namespace TetAIDotNET
         /// <param name="value">追加差分</param>
         /// <param name="index">何個目のミノか</param>
         /// <param name="isX">xかyか</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static public void AddPosition(ref long array, long value, int index, bool isX)
         {
             if (index == int.MaxValue)
@@ -212,6 +215,7 @@ namespace TetAIDotNET
             array += value;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static public void AddAllPosition(ref long array, int x, int y)
         {
             int value = y;
@@ -226,6 +230,7 @@ namespace TetAIDotNET
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetPosition(int index, bool isX)
         {
             if (index == int.MaxValue)
@@ -245,6 +250,7 @@ namespace TetAIDotNET
                 return (int)value % 100;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static public int GetPosition(long value, int index, bool isX)
         {
             if (index == int.MaxValue)

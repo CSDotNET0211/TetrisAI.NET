@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -35,18 +36,19 @@ namespace TetAIDotNET
         /// 検索したパターンを中心hashをkeyとして収納
         /// </summary>
         static List<Dictionary<long, Pattern>> _searchedPatternsList = new List<Dictionary<long, Pattern>>();
+        static List<Dictionary<long, Pattern>> __searchedPatternListForPool = new List<Dictionary<long, Pattern>>();
+
         /// <summary>
         /// ミノ位置をそれぞれ保持して重複を最小限に
         /// </summary>
         static List<HashSet<long>> _passedTreeRoutesList = new List<HashSet<long>>();
         static List<Pattern?> _bestInThreadList = new List<Pattern?>();
 
+        static object _lock = new object();
         static Pattern? _best = null;
-        static int _threadCount;
-
-        public static List<List<BitArray>> _fieldsList = new List<List<BitArray>>();
+        public static BlockingCollection<BitArray> _fieldsList = new BlockingCollection<BitArray>(new ConcurrentBag<BitArray>());
         static ManualResetEvent _resetEvent;
-        static int _remainThreadCount;
+        static int count = 0;
         public static long GetBestMove(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field, int nextCount)
         {
             _resetEvent = new ManualResetEvent(false);
@@ -83,23 +85,52 @@ namespace TetAIDotNET
             return _best.Value.Move;
         }
 
-        public static void GetBest(int current, int next, int nextCount, int hold, bool canHold, BitArray field, long firstMove, float beforeEval, ref int taskIndex)
+
+        static BlockingCollection<Data> _queue = new BlockingCollection<Data>();
+
+        public struct Data
         {
-            //     Console.WriteLine("スレッド:" + Thread.CurrentThread.ManagedThreadId);
-            //     Console.WriteLine("検索開始:" + Thread.CurrentThread.ManagedThreadId);
+            public Data(int current, int next, int nextCount, int hold, bool canHold, int fieldIndex, long firstMove, float beforeEval)
+            {
+                Current = current; ;
+                Next = next;
+                NextCount = nextCount;
+                Hold = hold;
+                CanHold = canHold;
+                FieldIndex = fieldIndex;
+                FirstMove = firstMove;
+                BeforeEval = beforeEval;
+
+            }
+
+            public int Current;
+            public int Next;
+            public int NextCount;
+            public int Hold;
+            public bool CanHold;
+            public int FieldIndex;
+            public long FirstMove;
+            public float BeforeEval;
+
+        }
+
+        static public void GetData(Data data)
+        {
+            //GetBestと同じことする
+            //再帰の代わりにQueue登録
 
             //ミノの種類からミノ情報作成
-            var mino = Environment.CreateMino((MinoKind)current);
+            var mino = Environment.CreateMino((MinoKind)data.Current);
+
+            var patternsInThisMoveTemp = new Dictionary<long, Pattern>();
+
 
             //検索関数に渡してパターンを列挙 
-            SearchAndAddPatterns(mino, field, 0, 0, Action.Null, 0, ref taskIndex);
-            var patternsInThisMove = _searchedPatternsList[taskIndex].Values.ToArray();
-            _searchedPatternsList[taskIndex].Clear();
+            SearchAndAddPatterns(mino, _fieldsList[data.FieldIndex], 0, 0, Action.Null, 0, patternsInThisMoveTemp,);
+            var patternsInThisMove = patternsInThisMoveTemp.Values.ToArray();
+            //  _searchedPatternsList[taskIndex].Clear();
 
-            //     Console.WriteLine("検索終了、次再帰準備開始:" + Thread.CurrentThread.ManagedThreadId);
-            //ネクストカウントが0、つまり最後の先読みの場合最善手を更新して返す
-            //上位２０個を持ってくる
-            if (nextCount == 0)
+            if (data.NextCount == 0)
             {
                 Pattern? best = null;
 
@@ -115,31 +146,19 @@ namespace TetAIDotNET
 
                 for (int beem = 0; beem < beemWidth; beem++)
                 {
-                    //patternsInThisMove[beem].Eval += beforeEval;
                     long first;
-                    if (firstMove == -1)
+                    if (data.FirstMove == -1)
                         first = patternsInThisMove[beem].Move;
                     else
-                        first = firstMove;
+                        first = data.FirstMove;
 
-                    //１つの最終的な手の中で最も良い手が存在しないか今の手がより良い評価だった場合は交換
-                    //最後の手は行動だけ変えとけばいいか
                     Utility.ReplaceToBetterUpdateOnlyMove(ref best, patternsInThisMove[beem], first);
-                    
+
                 }
 
-                //評価が高ければ更新
-                if (taskIndex == 0)
+                lock (_lock)
                 {
                     Utility.ReplaceToBetter(ref _best, (Pattern)best);
-
-                    _resetEvent.Set();
-                }
-                else
-                {
-                    Utility.ReplaceToBetter(_bestInThreadList, taskIndex, (Pattern)best);
-
-                   
                 }
             }
             else
@@ -157,26 +176,21 @@ namespace TetAIDotNET
                     Array.Sort(patternsInThisMove, ISortPattern.GetInstance());
                 }
 
-                //全スレッドの終了通知に使用
-                if (taskIndex == 0)
-                    _remainThreadCount = beemWidth;
-
-                //firstMoveがない＝最初の検索の場合、スレッドを起動する
                 for (int beem = 0; beem < beemWidth; beem++)
                 {
-                    patternsInThisMove[beem].Eval += beforeEval;
+                    patternsInThisMove[beem].Eval += data.BeforeEval;
 
                     //最初の行動のみ保存
                     long first;
-                    if (firstMove == -1)
+                    if (data.FirstMove == -1)
                         first = patternsInThisMove[beem].Move;
                     else
-                        first = firstMove;
+                        first = data.FirstMove;
 
-                    int newcurrent = next;
-                    int newnext = next;
+                    int newcurrent = data.Next;
+                    int newnext = data.Next;
                     int tempDiv = 10;
-                    for (int i = 0; i < nextCount - 1; i++)
+                    for (int i = 0; i < data.NextCount - 1; i++)
                     {
                         newcurrent /= 10;
                         tempDiv *= 10;
@@ -184,85 +198,54 @@ namespace TetAIDotNET
 
                     newnext %= tempDiv;
 
-                    //再帰
-                    if (firstMove == -1)
-                    {
-                        //firstMoveが-1＝＝探索を１度もやっていない場合ここに条件分岐
+                    //新しい検索に追加
 
-                        PrepareThread();
-                        _threadCount++;
-                        taskIndex = _threadCount - 1;
-
-                        var args = new ClassForThreadArgs(newcurrent, newnext, nextCount - 1, hold, canHold, _fieldsList[0][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval, taskIndex);
-                        ThreadPool.QueueUserWorkItem(GetBest, args);
-                    }
-                    else
-                        GetBest(newcurrent, newnext, nextCount - 1, hold, canHold, _fieldsList[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval, ref taskIndex);
+                    var newdata = new Data(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold,data.FieldIndex,first, patternsInThisMove[beem].Eval);
+                    _queue.TryAdd(newdata, Timeout.Infinite);
+                //    GetBest(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, _fieldsList[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
 
 
 
                 }
             }
+        }
 
-            void PrepareThread()
+        static public void GetLoop()
+        {
+            while (true)
             {
-                _passedTreeRoutesList.Add(new HashSet<long>());
-                _searchedPatternsList.Add(new Dictionary<long, Pattern>());
-                _fieldsList.Add(new List<BitArray>());
-                _bestInThreadList.Add(null);
+                //すべてのスレッドが終了するまでは待ち続ける
+                //１つのスレッドを起動したときは、１０個ぐらい検索させる
+                //Queue一覧から検索する
+                //スレッドが全部帰ってきたときにキューがゼロだったら完了
             }
         }
 
-        //
-
-        public static void GetBest(object param)
-        {
-       //     Console.WriteLine("スレッド開始:" + Thread.CurrentThread.ManagedThreadId);
-
-            var args = param as ClassForThreadArgs;
-            int current = args.Current;
-            int next = args.Next;
-            int nextCount = args.NextCount;
-            int hold = args.Hold;
-            bool canHold = args.CanHold;
-            BitArray field = args.Field;
-            long firstMove = args.First;
-            float beforeEval = args.Eval;
-            int taskIndex = args.TaskIndex;
-
-            GetBest(current, next, nextCount - 1, hold, canHold, field, firstMove, beforeEval, ref taskIndex);
-
-            if (Interlocked.Decrement(ref _remainThreadCount) == 0)
-                _resetEvent.Set();
-
-            //  Console.WriteLine("スレッド終了:" + Thread.CurrentThread.ManagedThreadId);
-        }
-
-
-        static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, long move, Action lockDirection, int rotateCount, ref int taskIndex)
+        static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, long move, Action lockDirection, int rotateCount,
+            Dictionary<long, Pattern> searchedData, HashSet<long> passedTreeRouteSet)
         {
             //ハードドロップ
             {
-                long tempmove = (int)Action.Harddrop;
+                long newMoveDiff = (int)Action.Harddrop;
                 for (int i = 0; i < moveCount; i++)
-                    tempmove *= 10;
+                    newMoveDiff *= 10;
 
-                var newmino = mino;
+                var newMino = mino;
                 //一番下までソフドロ
                 int temp = 0;
                 while (true)
                 {
                     temp++;
-                    if (!Environment.CheckValidPos(field, newmino, new Vector2(0, -temp)))
+                    if (!Environment.CheckValidPos(field, newMino, new Vector2(0, -temp)))
                     {
                         temp--;
                         break;
                     }
                 }
-                newmino.Move(y: -temp);
+                newMino.Move(y: -temp);
 
                 //設置位置の重複判定のためのハッシュ作成
-                long hash = GetHashForPosition(newmino.MinoKind, newmino.Rotation, newmino.Position);
+                long hash = GetHashForPosition(newMino.MinoKind, newMino.Rotation, newMino.Position);
                 Pattern value;
 
                 //設置があった場合は行動回数で比較して追加判断
@@ -270,25 +253,25 @@ namespace TetAIDotNET
 
 
                 //
-                if (_searchedPatternsList[taskIndex].TryGetValue(hash, out value))
+                if (searchedData.TryGetValue(hash, out value))
                 {
-                    _searchedPatternsList[taskIndex].Remove(hash);
+                    searchedData.Remove(hash);
 
                     //行動回数が少ないやつ
                     if (value.MoveCount > moveCount)
                     {
                         value.MoveCount = moveCount;
-                        value.Move = move + tempmove;
+                        value.Move = move + newMoveDiff;
                     }
 
-                    _searchedPatternsList[taskIndex].Add(hash, value);
+                    searchedData.Add(hash, value);
                 }
                 else
                 {
                     Pattern pattern = new Pattern();
-                    pattern.Position = newmino.Position;
+                    pattern.Position = newMino.Position;
                     pattern.MoveCount = moveCount;
-                    pattern.Move = move + tempmove;
+                    pattern.Move = move + newMoveDiff;
 
                     var fieldclone = (BitArray)field.Clone();
 
@@ -304,10 +287,11 @@ namespace TetAIDotNET
                     int clearedLine = Environment.CheckAndClearLine(fieldclone);
                     pattern.Eval = Evaluation.NewEvaluate(fieldclone, clearedLine);
 
-                    _fieldsList[taskIndex].Add(fieldclone);
-                    pattern.FieldIndex = _fieldsList[taskIndex].Count - 1;
+                   _fieldsList.TryAdd(fieldclone,Timeout.Infinite);
+                //    fieldList.Add(fieldclone);
+                    pattern.FieldIndex = _fieldsList.Count - 1;
 
-                    _searchedPatternsList[taskIndex].Add(hash, pattern);
+                    searchedData.Add(hash, pattern);
                 }
             }
 
@@ -317,7 +301,7 @@ namespace TetAIDotNET
             {
                 var newmino = mino;
 
-                if (!IsPassedBefore(mino.MinoKind, mino.Position, Vector2.mx1.x, Vector2.mx1.y, mino.Rotation, true, ref taskIndex))
+                if (!IsPassedBefore(mino.MinoKind, mino.Position, Vector2.mx1.x, Vector2.mx1.y, mino.Rotation, true, passedTreeRouteSet))
                 {
                     newmino.Move(Vector2.mx1.x, Vector2.mx1.y);
 
@@ -325,7 +309,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveLeft, rotateCount, ref taskIndex);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveLeft, rotateCount, searchedData, passedTreeRouteSet, fieldList);
                 }
             }
 
@@ -334,7 +318,7 @@ namespace TetAIDotNET
             {
                 var newmino = mino;
 
-                if (!IsPassedBefore(mino.MinoKind, mino.Position, Vector2.x1.x, Vector2.x1.y, mino.Rotation, true, ref taskIndex))
+                if (!IsPassedBefore(mino.MinoKind, mino.Position, Vector2.x1.x, Vector2.x1.y, mino.Rotation, true, passedTreeRouteSet))
                 {
                     newmino.Move(Vector2.x1.x, Vector2.x1.y);
 
@@ -342,7 +326,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveRight, rotateCount, ref taskIndex);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveRight, rotateCount, searchedData, passedTreeRouteSet, fieldList);
                 }
             }
 
@@ -357,7 +341,7 @@ namespace TetAIDotNET
                 Rotation newrotation = 0;
                 Environment.GetNextRotateEnum(Rotate.Right, ref newrotation);
 
-                if (!IsPassedBefore(mino.MinoKind, mino.Position, vec.x, vec.y, newrotation, true, ref taskIndex))
+                if (!IsPassedBefore(mino.MinoKind, mino.Position, vec.x, vec.y, newrotation, true, passedTreeRouteSet))
                 {
                     newmino.Move(vec.x, vec.y);
                     Environment.SimpleRotate(Rotate.Right, ref newmino, 0);
@@ -366,7 +350,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1, ref taskIndex);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1, searchedData, passedTreeRouteSet, fieldList);
                 }
             }
 
@@ -379,7 +363,7 @@ namespace TetAIDotNET
                 Rotation newrotation = 0;
                 Environment.GetNextRotateEnum(Rotate.Left, ref newrotation);
 
-                if (!IsPassedBefore(mino.MinoKind, mino.Position, vec.x, vec.y, newrotation, true, ref taskIndex))
+                if (!IsPassedBefore(mino.MinoKind, mino.Position, vec.x, vec.y, newrotation, true, passedTreeRouteSet))
                 {
                     newmino.Move(vec.x, vec.y);
                     Environment.SimpleRotate(Rotate.Left, ref newmino, 0);
@@ -388,7 +372,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1, ref taskIndex);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1, searchedData, passedTreeRouteSet, fieldList);
                 }
             }
 
@@ -405,7 +389,7 @@ namespace TetAIDotNET
         /// <param name="newrotation"></param>
         /// <param name="ApplyHistory"></param>
         /// <returns></returns>
-        static private bool IsPassedBefore(MinoKind kind, long pos, int x, int y, Rotation newrotation, bool ApplyHistory, ref int taskIndex)
+        static private bool IsPassedBefore(MinoKind kind, long pos, int x, int y, Rotation newrotation, bool ApplyHistory, HashSet<long> passedTreeRouteSet)
         {
             //    pos += y;
             //    pos += x * 100;
@@ -413,12 +397,12 @@ namespace TetAIDotNET
             Mino.AddAllPosition(ref pos, x, y);
             var hash = GetHashForPosition(kind, newrotation, pos);
 
-            bool result = _passedTreeRoutesList[taskIndex].Contains(hash);
+            bool result = passedTreeRouteSet.Contains(hash);
             if (result)
                 return true;
 
             if (ApplyHistory)
-                _passedTreeRoutesList[taskIndex].Add(hash);
+                passedTreeRouteSet.Add(hash);
 
             return false;
 
