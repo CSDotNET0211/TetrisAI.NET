@@ -32,8 +32,8 @@ namespace TetAIDotNET
             ThreadPool.GetMaxThreads(out worker, out io);
 
             ThreadPool.SetMinThreads(0, 0);
-            ThreadPool.SetMaxThreads(1, 0);
-         //   ThreadPool.SetMaxThreads(CPU_THREADCOUNT, 0);
+         //   ThreadPool.SetMaxThreads(1, 0);
+            ThreadPool.SetMaxThreads(CPU_THREADCOUNT, 0);
       //      DefaultSearch._semaphore = new SemaphoreSlim(0, CPU_THREADCOUNT);
 
                Console.WriteLine($"MAXThread Worker:{worker},IO:{io}\n");
@@ -69,7 +69,7 @@ namespace TetAIDotNET
 
                     }
                     environment.PrintGame();
-                    //Thread.Sleep(100);
+                    Thread.Sleep(100);
 
                     stopwatch.Stop();
                     Console.WriteLine(printrsult);

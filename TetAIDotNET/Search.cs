@@ -29,67 +29,43 @@ namespace TetAIDotNET
     /// </summary>
     class BeemSearch
     {
-        //keyがIndexを表しているtet
-
-        //   static List<Pattern> _endSearchedPatterns = new List<Pattern>();
-        /// <summary>
-        /// 検索したパターンを中心hashをkeyとして収納
-        /// </summary>
-        static List<Dictionary<long, Pattern>> _searchedPatternsList = new List<Dictionary<long, Pattern>>();
-        static List<Dictionary<long, Pattern>> __searchedPatternListForPool = new List<Dictionary<long, Pattern>>();
-
-        /// <summary>
-        /// ミノ位置をそれぞれ保持して重複を最小限に
-        /// </summary>
-        static List<HashSet<long>> _passedTreeRoutesList = new List<HashSet<long>>();
-        static List<Pattern?> _bestInThreadList = new List<Pattern?>();
-
         static object _lock = new object();
         static Pattern? _best = null;
         public static BlockingCollection<BitArray> _fieldsList = new BlockingCollection<BitArray>(new ConcurrentBag<BitArray>());
         static ManualResetEvent _resetEvent;
-        static int count = 0;
+        static BlockingCollection<Data> _queue = new BlockingCollection<Data>();
+        static int _activeThreadCount = 0;
+
         public static long GetBestMove(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field, int nextCount)
         {
-            _resetEvent = new ManualResetEvent(false);
+            _queue.Clear();
+            _fieldsList.Clear();
+       //     _resetEvent = new ManualResetEvent(false);
             int nextint = 0;
             for (int i = 0; i < nextCount; i++)
                 nextint = (int)nexts[i] * (10 * (nextCount - i - 1));
 
             int holdint = hold == null ? -1 : (int)hold;
 
-            _queue.TryAdd();
-            var data=new Data((int)current,nextint,nextCount,holdint,canHold,,)
+            var data = new Data((int)current, nextint, 0, holdint, canHold, 0, -1, 0);
+            _queue.TryAdd(data);
+            _fieldsList.TryAdd(field, Timeout.Infinite);
 
 
-            _searchedPatternsList.Clear();
+            //       _searchedPatternsList.Clear();
 
-            _fieldsList.Clear();
-            _passedTreeRoutesList.Clear();
-            _best = null;
-            _bestInThreadList.Clear();
+            //       _searchedPatternsList.Add(new Dictionary<long, Pattern>());
 
-            _threadCount = 1;
-            _passedTreeRoutesList.Add(new HashSet<long>());
-            _searchedPatternsList.Add(new Dictionary<long, Pattern>());
-            _fieldsList.Add(new List<BitArray>());
-            int taskIndex = 0;
-            GetBest((int)current, nextint, 1, holdint, canHold, field, -1, 0, ref taskIndex);
+            var result = GetLoop();
+            // GetBest((int)current, nextint, 1, holdint, canHold, field, -1, 0, ref taskIndex);
 
-            _resetEvent.WaitOne();
+            //   _resetEvent.WaitOne();
 
-            foreach (var test in _bestInThreadList)
-            {
-                if (_best == null || _best.Value.Move < test.Value.Move)
-                    _best = test;
-            }
-
-
-            return _best.Value.Move;
+            return result;
         }
 
 
-        static BlockingCollection<Data> _queue = new BlockingCollection<Data>();
+
 
         public struct Data
         {
@@ -117,8 +93,9 @@ namespace TetAIDotNET
 
         }
 
-        static public void GetData(Data data)
+        static public void GetData(object dataobj)
         {
+            Data data = (Data)dataobj;
             //GetBestと同じことする
             //再帰の代わりにQueue登録
 
@@ -133,7 +110,7 @@ namespace TetAIDotNET
             SearchAndAddPatterns(mino, _fieldsList.ElementAt(data.FieldIndex), 0, 0, Action.Null, 0,
                 patternsInThisMoveTemp, passedBefore);
             var patternsInThisMove = patternsInThisMoveTemp.Values.ToArray();
-            
+
 
             if (data.NextCount == 0)
             {
@@ -206,16 +183,19 @@ namespace TetAIDotNET
                     //新しい検索に追加
 
                     var newdata = new Data(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, data.FieldIndex, first, patternsInThisMove[beem].Eval);
-                    _queue.TryAdd(newdata, Timeout.Infinite);
-                    //    GetBest(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, _fieldsList[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
-
+                if(!   _queue.TryAdd(newdata, Timeout.Infinite))
+                        throw new Exception();
+                        //    GetBest(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, _fieldsList[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
+                        Console.WriteLine("キュー追加"+ _queue.Count);
 
 
                 }
             }
+
+            Interlocked.Decrement(ref _activeThreadCount);
         }
 
-        static public void GetLoop()
+        static public long GetLoop()
         {
             while (true)
             {
@@ -223,6 +203,26 @@ namespace TetAIDotNET
                 //１つのスレッドを起動したときは、１０個ぐらい検索させる
                 //Queue一覧から検索する
                 //スレッドが全部帰ってきたときにキューがゼロだったら完了
+                Data data;
+                if (_queue.TryTake(out data, 10))
+                {
+                    Console.WriteLine("キュー取り出し"+_queue.Count);
+                    Interlocked.Increment(ref _activeThreadCount);
+
+                    ThreadPool.QueueUserWorkItem(GetData, (object)data);
+              //      GetData(data);
+                }
+                else
+                {
+                    Console.WriteLine("待機");
+                    //スレッド数を表すスレッドセーフな数字を用意して、ここに到達したときゼロだったら検索完了
+                    if (_activeThreadCount == 0)
+                    {
+                        Console.WriteLine("終了 best："+ _best.Value.Move);
+                        return _best.Value.Move;
+                    }
+
+                }
             }
         }
 

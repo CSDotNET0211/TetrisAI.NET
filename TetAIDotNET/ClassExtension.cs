@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,16 +9,31 @@ namespace TetAIDotNET
 {
     static class ClassExtension
     {
-  /*      static public Mino Clone(this Mino mino)
+        /*      static public Mino Clone(this Mino mino)
+              {
+                  var newmino = new Mino();
+                  newmino.MinoKind = mino.MinoKind;
+                  newmino.Rotation = mino.Rotation;
+                  newmino.Init(mino.AbsolutelyPosition,new Vector2[4]);
+                  Array.Copy(mino._positions, newmino._positions, mino.Positions.Length);
+                  return newmino;
+              }
+
+
+        */
+
+        public static void Clear<T>(this BlockingCollection<T> collection)
         {
-            var newmino = new Mino();
-            newmino.MinoKind = mino.MinoKind;
-            newmino.Rotation = mino.Rotation;
-            newmino.Init(mino.AbsolutelyPosition,new Vector2[4]);
-            Array.Copy(mino._positions, newmino._positions, mino.Positions.Length);
-            return newmino;
+            if (collection == null)
+                return;
+
+            while (collection.Count > 0)
+            {
+                T item;
+                collection.TryTake(out item);
+            }
         }
-  */
+
         public static int ActionCount(this Action[] array)
         {
             int count = 0;

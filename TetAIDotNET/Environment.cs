@@ -492,6 +492,7 @@ namespace TetAIDotNET
         }
         public void UserInput(Action action)
         {
+            Console.WriteLine(action);
             Vector2? srs;
             switch (action)
             {
