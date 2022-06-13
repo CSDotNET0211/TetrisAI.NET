@@ -58,10 +58,11 @@ namespace TetAIDotNET
 
             int holdint = hold == null ? -1 : (int)hold;
 
-        _queue.TryAdd();
+            _queue.TryAdd();
+            var data=new Data((int)current,nextint,nextCount,holdint,canHold,,)
 
 
-   _searchedPatternsList.Clear();
+            _searchedPatternsList.Clear();
 
             _fieldsList.Clear();
             _passedTreeRoutesList.Clear();
@@ -125,12 +126,14 @@ namespace TetAIDotNET
             var mino = Environment.CreateMino((MinoKind)data.Current);
 
             var patternsInThisMoveTemp = new Dictionary<long, Pattern>();
-
+            HashSet<long> passedBefore = new HashSet<long>();
+            //    var searchedData=new Dictionary<>
 
             //検索関数に渡してパターンを列挙 
-            SearchAndAddPatterns(mino, _fieldsList[data.FieldIndex], 0, 0, Action.Null, 0, patternsInThisMoveTemp,);
+            SearchAndAddPatterns(mino, _fieldsList.ElementAt(data.FieldIndex), 0, 0, Action.Null, 0,
+                patternsInThisMoveTemp, passedBefore);
             var patternsInThisMove = patternsInThisMoveTemp.Values.ToArray();
-            //  _searchedPatternsList[taskIndex].Clear();
+            
 
             if (data.NextCount == 0)
             {
@@ -202,9 +205,9 @@ namespace TetAIDotNET
 
                     //新しい検索に追加
 
-                    var newdata = new Data(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold,data.FieldIndex,first, patternsInThisMove[beem].Eval);
+                    var newdata = new Data(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, data.FieldIndex, first, patternsInThisMove[beem].Eval);
                     _queue.TryAdd(newdata, Timeout.Infinite);
-                //    GetBest(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, _fieldsList[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
+                    //    GetBest(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, _fieldsList[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
 
 
 
@@ -289,8 +292,8 @@ namespace TetAIDotNET
                     int clearedLine = Environment.CheckAndClearLine(fieldclone);
                     pattern.Eval = Evaluation.NewEvaluate(fieldclone, clearedLine);
 
-                   _fieldsList.TryAdd(fieldclone,Timeout.Infinite);
-                //    fieldList.Add(fieldclone);
+                    _fieldsList.TryAdd(fieldclone, Timeout.Infinite);
+                    //    fieldList.Add(fieldclone);
                     pattern.FieldIndex = _fieldsList.Count - 1;
 
                     searchedData.Add(hash, pattern);
@@ -311,7 +314,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveLeft, rotateCount, searchedData, passedTreeRouteSet, fieldList);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveLeft, rotateCount, searchedData, passedTreeRouteSet);
                 }
             }
 
@@ -328,7 +331,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveRight, rotateCount, searchedData, passedTreeRouteSet, fieldList);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveRight, rotateCount, searchedData, passedTreeRouteSet);
                 }
             }
 
@@ -352,7 +355,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1, searchedData, passedTreeRouteSet, fieldList);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1, searchedData, passedTreeRouteSet);
                 }
             }
 
@@ -374,7 +377,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1, searchedData, passedTreeRouteSet, fieldList);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1, searchedData, passedTreeRouteSet);
                 }
             }
 
