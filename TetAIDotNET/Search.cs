@@ -2,11 +2,8 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace TetAIDotNET
 {
@@ -40,13 +37,13 @@ namespace TetAIDotNET
         {
             _best = null;
 
-            #if DEBUG
+#if DEBUG
             if (_queue!=null||_queue.Count != 0)
             {
                 throw new Exception("キューがゼロではありません。前回の探索が正常に行われなかった可能性があります。");
             _queue.Clear();
             }
-            #endif
+#endif
 
             _fieldsList.Clear();
 
@@ -108,11 +105,11 @@ namespace TetAIDotNET
             //    var searchedData=new Dictionary<>
 
             //検索関数に渡してパターンを列挙 
-            SearchAndAddPatterns(mino, _fieldsList.ElementAt(data.FieldIndex), 0, 0, Action.Null, 0,
+            SearchAndAddPatterns(mino, _fieldsList.ElementAt(data.FieldIndex), 0, 0,ref data.BeforeEval, Action.Null, 0,
                 patternsInThisMoveTemp, passedBefore);
             var patternsInThisMove = patternsInThisMoveTemp.Values.ToArray();
 
-
+            //ソートのタイミング
             if (data.NextCount == 0)
             {
                 Pattern? best = null;
@@ -220,7 +217,7 @@ namespace TetAIDotNET
 
                     if (_activeThreadCount == 0)
                     {
-                        Console.WriteLine("終了 best：" + _best.Value.Move);
+                        //  Console.WriteLine("終了 best：" + _best.Value.Move);
                         return _best.Value.Move;
                     }
 
@@ -228,7 +225,7 @@ namespace TetAIDotNET
             }
         }
 
-        static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, long move, Action lockDirection, int rotateCount,
+        static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, long move, ref float beforeEval, Action lockDirection, int rotateCount,
             Dictionary<long, Pattern> searchedData, HashSet<long> passedTreeRouteSet)
         {
             //ハードドロップ
@@ -292,7 +289,7 @@ namespace TetAIDotNET
                     }
 
                     int clearedLine = Environment.CheckAndClearLine(fieldclone);
-                    pattern.Eval = Evaluation.NewEvaluate(fieldclone, clearedLine);
+                    pattern.Eval = Evaluation.NewEvaluate(fieldclone, clearedLine) + beforeEval;
 
                     _fieldsList.TryAdd(fieldclone, Timeout.Infinite);
                     //    fieldList.Add(fieldclone);
@@ -316,7 +313,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveLeft, rotateCount, searchedData, passedTreeRouteSet);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, ref beforeEval, Action.MoveLeft, rotateCount, searchedData, passedTreeRouteSet);
                 }
             }
 
@@ -333,7 +330,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, Action.MoveRight, rotateCount, searchedData, passedTreeRouteSet);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, ref beforeEval, Action.MoveRight, rotateCount, searchedData, passedTreeRouteSet);
                 }
             }
 
@@ -357,7 +354,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1, searchedData, passedTreeRouteSet);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, ref beforeEval, lockDirection, rotateCount + 1, searchedData, passedTreeRouteSet);
                 }
             }
 
@@ -379,7 +376,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, lockDirection, rotateCount + 1, searchedData, passedTreeRouteSet);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, ref beforeEval, lockDirection, rotateCount + 1, searchedData, passedTreeRouteSet);
                 }
             }
 
