@@ -23,8 +23,7 @@ namespace TetAIDotNET
             }
             else if (test.Eval > ((Pattern)nowBest).Eval)
             {
-
-                var temp = (Pattern)nowBest;
+                var temp = test;
                 temp.Move = move;
                 nowBest = temp;
             }
@@ -33,8 +32,8 @@ namespace TetAIDotNET
         static public void ReplaceToBetter(List<Pattern?> list, int bestIndex, Pattern test)
         {
             //taskIndexは最初のスレッドも含まれてるので-1
-            if (list[bestIndex-1] == null|| test.Eval > ((Pattern)list[bestIndex]).Eval)
-                list[bestIndex-1] = test;
+            if (list[bestIndex - 1] == null || test.Eval > ((Pattern)list[bestIndex]).Eval)
+                list[bestIndex - 1] = test;
         }
     }
 }
