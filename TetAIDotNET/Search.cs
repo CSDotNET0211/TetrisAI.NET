@@ -53,7 +53,7 @@ namespace TetAIDotNET
 
             int holdint = hold == null ? -1 : (int)hold;
 
-            var data = new Data((int)current, nextint, 1, holdint, canHold, 0, -1, 0);
+            var data = new Data((int)current, nextint, 3, holdint, canHold, 0, -1, 0);
             Interlocked.Increment(ref _activeThreadCount);
             _queue.TryAdd(data);
             _fieldsList.TryAdd(field, Timeout.Infinite);

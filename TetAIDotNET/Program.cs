@@ -69,7 +69,7 @@ namespace TetAIDotNET
 
                     }
                     environment.PrintGame();
-                    Thread.Sleep(100);
+                  //  Thread.Sleep(100);
 
                     stopwatch.Stop();
                     Console.WriteLine(printrsult);
