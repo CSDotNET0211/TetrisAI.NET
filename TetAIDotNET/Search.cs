@@ -38,29 +38,30 @@ namespace TetAIDotNET
 
         public static long GetBestMove(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field, int nextCount)
         {
+            _best = null;
+
+            #if DEBUG
+            if (_queue!=null||_queue.Count != 0)
+            {
+                throw new Exception("キューがゼロではありません。前回の探索が正常に行われなかった可能性があります。");
             _queue.Clear();
+            }
+            #endif
+
             _fieldsList.Clear();
-       //     _resetEvent = new ManualResetEvent(false);
+
             int nextint = 0;
             for (int i = 0; i < nextCount; i++)
                 nextint = (int)nexts[i] * (10 * (nextCount - i - 1));
 
             int holdint = hold == null ? -1 : (int)hold;
 
-            var data = new Data((int)current, nextint, 0, holdint, canHold, 0, -1, 0);
+            var data = new Data((int)current, nextint, 1, holdint, canHold, 0, -1, 0);
+            Interlocked.Increment(ref _activeThreadCount);
             _queue.TryAdd(data);
             _fieldsList.TryAdd(field, Timeout.Infinite);
 
-
-            //       _searchedPatternsList.Clear();
-
-            //       _searchedPatternsList.Add(new Dictionary<long, Pattern>());
-
             var result = GetLoop();
-            // GetBest((int)current, nextint, 1, holdint, canHold, field, -1, 0, ref taskIndex);
-
-            //   _resetEvent.WaitOne();
-
             return result;
         }
 
@@ -182,11 +183,12 @@ namespace TetAIDotNET
 
                     //新しい検索に追加
 
+                    Interlocked.Increment(ref _activeThreadCount);
                     var newdata = new Data(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, data.FieldIndex, first, patternsInThisMove[beem].Eval);
-                if(!   _queue.TryAdd(newdata, Timeout.Infinite))
+                    if (!_queue.TryAdd(newdata, Timeout.Infinite))
                         throw new Exception();
-                        //    GetBest(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, _fieldsList[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
-                        Console.WriteLine("キュー追加"+ _queue.Count);
+                    //    GetBest(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, _fieldsList[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
+                    //       Console.WriteLine("キュー追加"+ _queue.Count);
 
 
                 }
@@ -206,19 +208,19 @@ namespace TetAIDotNET
                 Data data;
                 if (_queue.TryTake(out data, 10))
                 {
-                    Console.WriteLine("キュー取り出し"+_queue.Count);
-                    Interlocked.Increment(ref _activeThreadCount);
+                    //     Interlocked.Increment(ref _activeThreadCount);
 
                     ThreadPool.QueueUserWorkItem(GetData, (object)data);
-              //      GetData(data);
+                    //      GetData(data);
                 }
                 else
                 {
-                    Console.WriteLine("待機");
+                    //     Console.WriteLine("待機");
                     //スレッド数を表すスレッドセーフな数字を用意して、ここに到達したときゼロだったら検索完了
+
                     if (_activeThreadCount == 0)
                     {
-                        Console.WriteLine("終了 best："+ _best.Value.Move);
+                        Console.WriteLine("終了 best：" + _best.Value.Move);
                         return _best.Value.Move;
                     }
 
