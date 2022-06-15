@@ -21,6 +21,32 @@ namespace TetAIDotNET
 
     }
 
+    public struct Data
+    {
+        public Data(int current, int next, int nextCount, int hold, bool canHold, BitArray field, long firstMove, float beforeEval)
+        {
+            Current = current; ;
+            Next = next;
+            NextCount = nextCount;
+            Hold = hold;
+            CanHold = canHold;
+            Field = field;
+            FirstMove = firstMove;
+            BeforeEval = beforeEval;
+
+        }
+
+        public int Current;
+        public int Next;
+        public int NextCount;
+        public int Hold;
+        public bool CanHold;
+        public BitArray Field;
+        public long FirstMove;
+        public float BeforeEval;
+
+    }
+
     /// <summary>
     /// 通常の探索（全探索）
     /// </summary>
@@ -28,10 +54,9 @@ namespace TetAIDotNET
     {
         static object _lock = new object();
         static Pattern? _best = null;
-        public static BlockingCollection<BitArray> _fieldsList = new BlockingCollection<BitArray>(new ConcurrentBag<BitArray>());
-        static ManualResetEvent _resetEvent;
         static BlockingCollection<Data> _queue = new BlockingCollection<Data>();
         static int _activeThreadCount = 0;
+        static List<List<BitArray>> _fieldThreadList= new List<List<BitArray>>();
 
         public static long GetBestMove(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field, int nextCount)
         {
@@ -53,11 +78,11 @@ namespace TetAIDotNET
 
             int holdint = hold == null ? -1 : (int)hold;
 
-            var data = new Data((int)current, nextint, 3, holdint, canHold, 0, -1, 0);
+            var data = new Data((int)current, nextint, 2, holdint, canHold,field
+                 , -1, 0);
             Interlocked.Increment(ref _activeThreadCount);
             _queue.TryAdd(data);
-            _fieldsList.TryAdd(field, Timeout.Infinite);
-
+            
             var result = GetLoop();
             return result;
         }
@@ -65,31 +90,7 @@ namespace TetAIDotNET
 
 
 
-        public struct Data
-        {
-            public Data(int current, int next, int nextCount, int hold, bool canHold, int fieldIndex, long firstMove, float beforeEval)
-            {
-                Current = current; ;
-                Next = next;
-                NextCount = nextCount;
-                Hold = hold;
-                CanHold = canHold;
-                FieldIndex = fieldIndex;
-                FirstMove = firstMove;
-                BeforeEval = beforeEval;
-
-            }
-
-            public int Current;
-            public int Next;
-            public int NextCount;
-            public int Hold;
-            public bool CanHold;
-            public int FieldIndex;
-            public long FirstMove;
-            public float BeforeEval;
-
-        }
+    
 
         static public void GetData(object dataobj)
         {
@@ -105,7 +106,7 @@ namespace TetAIDotNET
             //    var searchedData=new Dictionary<>
 
             //検索関数に渡してパターンを列挙 
-            SearchAndAddPatterns(mino, _fieldsList.ElementAt(data.FieldIndex), 0, 0,ref data.BeforeEval, Action.Null, 0,
+            SearchAndAddPatterns(mino, data.Field, 0, 0,ref data.BeforeEval, Action.Null, 0,
                 patternsInThisMoveTemp, passedBefore);
             var patternsInThisMove = patternsInThisMoveTemp.Values.ToArray();
 
@@ -181,9 +182,9 @@ namespace TetAIDotNET
                     //新しい検索に追加
 
                     Interlocked.Increment(ref _activeThreadCount);
-                    var newdata = new Data(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, data.FieldIndex, first, patternsInThisMove[beem].Eval);
-                    if (!_queue.TryAdd(newdata, Timeout.Infinite))
-                        throw new Exception();
+                    var newdata = new Data(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, , first, patternsInThisMove[beem].Eval);
+                    _queue.TryAdd(newdata, Timeout.Infinite);
+                     
                     //    GetBest(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, _fieldsList[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
                     //       Console.WriteLine("キュー追加"+ _queue.Count);
 
