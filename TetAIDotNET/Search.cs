@@ -21,7 +21,7 @@ namespace TetAIDotNET
 
     }
 
-    public struct Data
+    public class Data
     {
         public Data(int current, int next, int nextCount, int hold, bool canHold, BitArray field, long firstMove, float beforeEval)
         {
@@ -75,15 +75,13 @@ namespace TetAIDotNET
             }
 #endif
 
-            //  _fieldsList.Clear();
-
             int nextint = 0;
             for (int i = 0; i < nextCount; i++)
                 nextint = (int)nexts[i] * (10 * (nextCount - i - 1));
 
             int holdint = hold == null ? -1 : (int)hold;
 
-            var data = new Data((int)current, nextint, 3, holdint, canHold, field,
+            var data = new Data((int)current, nextint, 4, holdint, canHold, field,
                   -1, 0);
             Interlocked.Increment(ref _activeThreadCount);
             _queue.TryAdd(data);
@@ -185,17 +183,17 @@ namespace TetAIDotNET
             void Init()
             {
                 if (_fieldListThreadStatic == null)
-                    _fieldListThreadStatic = new List<BitArray>();
+                    _fieldListThreadStatic = new List<BitArray>(100);
                 else
                     _fieldListThreadStatic.Clear();
 
                 if (_patternsInThisMoveTemp == null)
-                    _patternsInThisMoveTemp = new Dictionary<long, Pattern>();
+                    _patternsInThisMoveTemp = new Dictionary<long, Pattern>(100);
                 else
                     _patternsInThisMoveTemp.Clear();
 
                 if (_passedBefore == null)
-                    _passedBefore = new HashSet<long>();
+                    _passedBefore = new HashSet<long>(100);
                 else
                     _passedBefore.Clear();
             }

@@ -52,7 +52,7 @@ namespace TetAIDotNET
                 var flag = true;
                 for (int y = Environment.FIELD_HEIGHT - 1; y >= 0; y--)
                 {
-                    if (newfield.Get(x + y * 10))
+                    if (newfield[x + y * 10])
                     {
                         if (smallest > y)
                             smallest = y;
@@ -82,8 +82,8 @@ namespace TetAIDotNET
             {
                 for (int x = 0; x < Environment.FIELD_WIDTH; x++)
                 {
-                    if (newfield.Get(x + y * 10) &&
-                     !newfield.Get(x + (y - 1) * 10))
+                    if (newfield[x + y * 10] &&
+                     !newfield[x + (y - 1) * 10])
                     {
                         if (holecount < 3)
                         {
@@ -91,7 +91,7 @@ namespace TetAIDotNET
                             while (true)
                             {
                                 if (testy + y < Environment.FIELD_HEIGHT &&
-                                    newfield.Get(x + (y + testy) * 10))
+                                    newfield[x + (y + testy) * 10])
                                 {
                                     testy++;
                                     holeEval[holecount]++;
