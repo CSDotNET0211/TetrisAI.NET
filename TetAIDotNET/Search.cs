@@ -23,7 +23,7 @@ namespace TetAIDotNET
 
     public struct Data
     {
-        public Data(int current, int next, int nextCount, int hold, bool canHold, BitArray field, long firstMove, float beforeEval, List<BitArray> fieldlist)
+        public Data(int current, int next, int nextCount, int hold, bool canHold, BitArray field, long firstMove, float beforeEval)
         {
             Current = current; ;
             Next = next;
@@ -33,7 +33,6 @@ namespace TetAIDotNET
             Field = field;
             FirstMove = firstMove;
             BeforeEval = beforeEval;
-            FieldList = fieldlist;
         }
 
         public int Current;
@@ -44,7 +43,6 @@ namespace TetAIDotNET
         public BitArray Field;
         public long FirstMove;
         public float BeforeEval;
-        public List<BitArray> FieldList;
 
     }
 
@@ -57,8 +55,13 @@ namespace TetAIDotNET
         static Pattern? _best = null;
         static BlockingCollection<Data> _queue = new BlockingCollection<Data>();
         static int _activeThreadCount = 0;
-        static List<List<BitArray>> _fieldThreadList = new List<List<BitArray>>();
-        static Dictionary<int, List<BitArray>> _fieldThreadDict = new Dictionary<int, List<BitArray>>();
+        [ThreadStatic]
+        static List<BitArray> _fieldListThreadStatic;
+        [ThreadStatic]
+        static Dictionary<long, Pattern> _patternsInThisMoveTemp;
+        [ThreadStatic]
+        static HashSet<long> _passedBefore;
+        //   static Dictionary<int, List<BitArray>> _fieldThreadDict = new Dictionary<int, List<BitArray>>();
 
         public static long GetBestMove(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field, int nextCount)
         {
@@ -80,8 +83,8 @@ namespace TetAIDotNET
 
             int holdint = hold == null ? -1 : (int)hold;
 
-            var data = new Data((int)current, nextint, 2, holdint, canHold, field
-                 , -1, 0);
+            var data = new Data((int)current, nextint, 3, holdint, canHold, field,
+                  -1, 0);
             Interlocked.Increment(ref _activeThreadCount);
             _queue.TryAdd(data);
 
@@ -96,6 +99,21 @@ namespace TetAIDotNET
 
         static public void GetData(object dataobj)
         {
+            if (_fieldListThreadStatic == null)
+                _fieldListThreadStatic = new List<BitArray>();
+            else
+                _fieldListThreadStatic.Clear();
+
+            if (_patternsInThisMoveTemp == null)
+                _patternsInThisMoveTemp = new Dictionary<long, Pattern>();
+            else
+                _patternsInThisMoveTemp.Clear();
+
+            if (_passedBefore == null)
+                _passedBefore = new HashSet<long>();
+            else
+                _passedBefore.Clear();
+
             Data data = (Data)dataobj;
             //GetBestと同じことする
             //再帰の代わりにQueue登録
@@ -103,17 +121,15 @@ namespace TetAIDotNET
             //ミノの種類からミノ情報作成
             var mino = Environment.CreateMino((MinoKind)data.Current);
 
-            var patternsInThisMoveTemp = new Dictionary<long, Pattern>();
-            HashSet<long> passedBefore = new HashSet<long>();
             //    var searchedData=new Dictionary<>
 
-            int listIndex;
-            var list =;
+            //  int listIndex;
+            // var list =;
 
             //検索関数に渡してパターンを列挙 
             SearchAndAddPatterns(mino, data.Field, 0, 0, ref data.BeforeEval, Action.Null, 0,
-             list, patternsInThisMoveTemp, passedBefore);
-            var patternsInThisMove = patternsInThisMoveTemp.Values.ToArray();
+            _patternsInThisMoveTemp, _passedBefore);
+            var patternsInThisMove = _patternsInThisMoveTemp.Values.ToArray();
 
             //ソートのタイミング
             if (data.NextCount == 0)
@@ -187,7 +203,7 @@ namespace TetAIDotNET
                     //新しい検索に追加
 
                     Interlocked.Increment(ref _activeThreadCount);
-                    var newdata = new Data(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, list[patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
+                    var newdata = new Data(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, _fieldListThreadStatic[patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
                     _queue.TryAdd(newdata, Timeout.Infinite);
 
                     //    GetBest(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, _fieldsList[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
@@ -197,7 +213,7 @@ namespace TetAIDotNET
                 }
             }
 
-            ListPool.Release(listIndex);
+            //ListPool.Release(listIndex);
             Interlocked.Decrement(ref _activeThreadCount);
         }
 
@@ -233,7 +249,7 @@ namespace TetAIDotNET
         }
 
         static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, long move, ref float beforeEval, Action lockDirection, int rotateCount,
-          List<BitArray> fieldList, Dictionary<long, Pattern> searchedData, HashSet<long> passedTreeRouteSet)
+           Dictionary<long, Pattern> searchedData, HashSet<long> passedTreeRouteSet)
         {
             //ハードドロップ
             {
@@ -299,10 +315,11 @@ namespace TetAIDotNET
                     pattern.Eval = Evaluation.NewEvaluate(fieldclone, clearedLine) + beforeEval;
 
 
-                    fieldList.Add(fieldclone);
+                    _fieldListThreadStatic.Add(fieldclone);
+                    //  fieldList.Add(fieldclone);
                     //   _fieldsList.TryAdd(fieldclone, Timeout.Infinite);
                     //    fieldList.Add(fieldclone);
-                    pattern.FieldIndex = fieldList.Count - 1;
+                    pattern.FieldIndex = _fieldListThreadStatic.Count - 1;
 
                     searchedData.Add(hash, pattern);
                 }
@@ -322,7 +339,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, ref beforeEval, Action.MoveLeft, rotateCount, fieldList, searchedData, passedTreeRouteSet);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, ref beforeEval, Action.MoveLeft, rotateCount, searchedData, passedTreeRouteSet);
                 }
             }
 
@@ -339,7 +356,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, ref beforeEval, Action.MoveRight, rotateCount, fieldList, searchedData, passedTreeRouteSet);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, ref beforeEval, Action.MoveRight, rotateCount, searchedData, passedTreeRouteSet);
                 }
             }
 
@@ -363,7 +380,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, ref beforeEval, lockDirection, rotateCount + 1, fieldList, searchedData, passedTreeRouteSet);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, ref beforeEval, lockDirection, rotateCount + 1, searchedData, passedTreeRouteSet);
                 }
             }
 
@@ -385,7 +402,7 @@ namespace TetAIDotNET
                     for (int i = 0; i < moveCount; i++)
                         temp *= 10;
 
-                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, ref beforeEval, lockDirection, rotateCount + 1, fieldList, searchedData, passedTreeRouteSet);
+                    SearchAndAddPatterns(newmino, field, moveCount + 1, move + temp, ref beforeEval, lockDirection, rotateCount + 1, searchedData, passedTreeRouteSet);
                 }
             }
 
