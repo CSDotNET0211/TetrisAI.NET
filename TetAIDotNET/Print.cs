@@ -9,12 +9,12 @@ namespace TetAIDotNET
 {
     class Print
     {
-        static public void PrintGame(BitArray field, long pos, MinoKind[] next, MinoKind? hold, float eval = 0)
+        static public void PrintGame(bool[] field, long pos, MinoKind[] next, MinoKind? hold, float eval = 0)
         {
             Console.CursorLeft = 0;
             Console.CursorTop = 0;
 
-            var fieldclone = (BitArray)field.Clone();
+            var fieldclone = (bool[])field.Clone();
             if (pos != -1)
             {
                 for (int i = 0; i < 4; i++)
@@ -22,7 +22,7 @@ namespace TetAIDotNET
                     var x = Mino.GetPosition(pos, i, true);
                     var y = Mino.GetPosition(pos, i, false);
 
-                    fieldclone.Set(x + y * 10, true);
+                    fieldclone[x + y * 10] =true;
                 }
 
             }
@@ -31,7 +31,7 @@ namespace TetAIDotNET
             {
                 for (int x = 0; x < Environment.FIELD_WIDTH; x++)
                 {
-                    if (fieldclone.Get(x + y * 10))
+                    if (fieldclone[x + y * 10])
                         Console.Write("■");
                     else
                         Console.Write("□");

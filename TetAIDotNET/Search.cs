@@ -23,7 +23,7 @@ namespace TetAIDotNET
 
     public class Data
     {
-        public Data(int current, int next, int nextCount, int hold, bool canHold, BitArray field, long firstMove, float beforeEval)
+        public Data(int current, int next, int nextCount, int hold, bool canHold, bool[] field, long firstMove, float beforeEval)
         {
             Current = current; ;
             Next = next;
@@ -40,7 +40,7 @@ namespace TetAIDotNET
         public int NextCount;
         public int Hold;
         public bool CanHold;
-        public BitArray Field;
+        public bool[] Field;
         public long FirstMove;
         public float BeforeEval;
 
@@ -56,14 +56,14 @@ namespace TetAIDotNET
         static BlockingCollection<Data> _queue = new BlockingCollection<Data>();
         static int _activeThreadCount = 0;
         [ThreadStatic]
-        static List<BitArray> _fieldListThreadStatic;
+        static List<bool[]> _fieldListThreadStatic;
         [ThreadStatic]
         static Dictionary<long, Pattern> _patternsInThisMoveTemp;
         [ThreadStatic]
         static HashSet<long> _passedBefore;
         //   static Dictionary<int, List<BitArray>> _fieldThreadDict = new Dictionary<int, List<BitArray>>();
 
-        public static long GetBestMove(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, BitArray field, int nextCount)
+        public static long GetBestMove(MinoKind current, MinoKind[] nexts, MinoKind? hold, bool canHold, bool[] field, int nextCount)
         {
             _best = null;
 
@@ -183,7 +183,7 @@ namespace TetAIDotNET
             void Init()
             {
                 if (_fieldListThreadStatic == null)
-                    _fieldListThreadStatic = new List<BitArray>(100);
+                    _fieldListThreadStatic = new List<bool[]>(100);
                 else
                     _fieldListThreadStatic.Clear();
 
@@ -213,7 +213,7 @@ namespace TetAIDotNET
             }
         }
 
-        static private void SearchAndAddPatterns(Mino mino, BitArray field, int moveCount, long move, ref float beforeEval, Action lockDirection, int rotateCount,
+        static private void SearchAndAddPatterns(Mino mino, bool[] field, int moveCount, long move, ref float beforeEval, Action lockDirection, int rotateCount,
            Dictionary<long, Pattern> searchedData, HashSet<long> passedTreeRouteSet)
         {
             //ハードドロップ
@@ -265,7 +265,7 @@ namespace TetAIDotNET
                     pattern.MoveCount = moveCount;
                     pattern.Move = move + newMoveDiff;
 
-                    var fieldclone = (BitArray)field.Clone();
+                    var fieldclone = (bool[])field.Clone();
 
                     //設置したミノを適用
                     for (int i = 0; i < 4; i++)

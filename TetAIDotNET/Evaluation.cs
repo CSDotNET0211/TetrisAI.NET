@@ -10,130 +10,24 @@ namespace TetAIDotNET
     class Evaluation
     {
         public const int WEIGHT_COUNT = 9;
-        // static BitArray newfield = new BitArray(Environment.FIELD_WIDTH * Environment.FIELD_HEIGHT);
-        static int[] rowheight = new int[Environment.FIELD_WIDTH];
+        [ThreadStatic]
+        static int[] _rowheight = new int[Environment.FIELD_WIDTH];
+    //    [ThreadStatic]
         static public float[] Weight = new float[WEIGHT_COUNT];
+        [ThreadStatic]
+   static     List<int> _heightsWithoutIdo;
+
         //  static float[] holeEval = new float[3];
 
-        public static float Evaluate(BitArray field, Mino mino)
+        public static float NewEvaluate(bool[] field, int lineClearCount)
         {
-            var newfield = (BitArray)field.Clone();
+            if (_rowheight == null)
+                _rowheight = new int[Environment.FIELD_WIDTH];
 
-            for (int i = 0; i < 4; i++)
-            {
-                int x = mino.GetPosition(i, true);
-                int y = mino.GetPosition(i, false);
-
-                newfield.Set(x + y * 10, true);
-            }
-
-
-            var cleared = Environment.CheckAndClearLine(newfield);
-            float clearedValue = 0;
-            switch (cleared)
-            {
-                case 1:
-                    clearedValue = Weight[1];
-                    break;
-                case 2:
-                    clearedValue = Weight[2];
-                    break;
-                case 3:
-                    clearedValue = Weight[3];
-                    break;
-                case 4:
-                    clearedValue = Weight[4];
-                    break;
-            }
-
-            int smallest = 50;
-            for (int x = 0; x < Environment.FIELD_WIDTH; x++)
-            {
-                var flag = true;
-                for (int y = Environment.FIELD_HEIGHT - 1; y >= 0; y--)
-                {
-                    if (newfield[x + y * 10])
-                    {
-                        if (smallest > y)
-                            smallest = y;
-                        rowheight[x] = y;
-                        flag = false;
-                        break;
-                    }
-                }
-                if (flag)
-                {
-                    smallest = -1;
-                    rowheight[x] = -1;
-                }
-
-            }
-            List<int> heightswithoutido = new List<int>(rowheight);
-            heightswithoutido.Remove(smallest);
-
-
-            int sumofheight = rowheight.Sum();
-            float[] holeEval = new float[3];
-            for (int i = 0; i < holeEval.Length; i++)
-                holeEval[i] = 0;
-
-            int holecount = 0;
-            for (int y = Environment.FIELD_HEIGHT - 1; y >= 1; y--)
-            {
-                for (int x = 0; x < Environment.FIELD_WIDTH; x++)
-                {
-                    if (newfield[x + y * 10] &&
-                     !newfield[x + (y - 1) * 10])
-                    {
-                        if (holecount < 3)
-                        {
-                            int testy = 0;
-                            while (true)
-                            {
-                                if (testy + y < Environment.FIELD_HEIGHT &&
-                                    newfield[x + (y + testy) * 10])
-                                {
-                                    testy++;
-                                    holeEval[holecount]++;
-                                }
-                                else
-                                    break;
-                            }
-
-
-                        }
-
-
-                        holecount++;
-                    }
-                }
-            }
-
-
-            int bump = 0;
-            for (int i = 0; i < heightswithoutido.Count - 1; i++)
-            {
-                bump += Math.Abs(heightswithoutido[i] - heightswithoutido[i + 1]);
-            }
-
-
-            return (Weight[0] * sumofheight) +
-                clearedValue +
-                (Weight[5] * holecount) +
-                (Weight[6] * bump) +
-                (Weight[7] * holecount * holecount) +
-                (Weight[8] * bump * bump) +
-                  (holeEval[0] * holeEval[0] * Weight[9]) +
-                  (holeEval[1] * holeEval[1] * Weight[10]) +
-                  (holeEval[2] * holeEval[2] * Weight[11]) +
-                   (holeEval[0] * Weight[12]) +
-                   (holeEval[1] * Weight[13]) +
-                   (holeEval[2] * Weight[14]);
-            // return (-0.51f * sumofheight) + (0.76f * cleared) + (-0.3566f * holecount) + (-0.1844f * bump);
-        }
-
-        public static float NewEvaluate(BitArray field, int lineClearCount)
-        {
+            if (_heightsWithoutIdo == null)
+                _heightsWithoutIdo = new List<int>();
+            else
+                _heightsWithoutIdo.Clear();
 
             float clearedValue = 0;
             switch (lineClearCount)
@@ -158,11 +52,11 @@ namespace TetAIDotNET
                 var flag = true;
                 for (int y = Environment.FIELD_HEIGHT - 1; y >= 0; y--)
                 {
-                    if (field.Get(x + y * 10))
+                    if (field[x + y * 10])
                     {
                         if (smallest > y)
                             smallest = y;
-                        rowheight[x] = y+1;
+                        _rowheight[x] = y+1;
                         flag = false;
                         break;
                     }
@@ -171,36 +65,18 @@ namespace TetAIDotNET
                 if (flag)
                 {
                     smallest = 0;
-                    rowheight[x] = 0;
+                    _rowheight[x] = 0;
                 }
 
             }
-            /* 
-            long heightsWithoutIdoLong = 0;
 
-            bool tempFlag = false;
-            int tempCount = 1;
-           for (int i = 0; i < rowheight.Length; i++)
-            {
+            _heightsWithoutIdo.AddRange(_rowheight);
 
-                if (rowheight[i] != smallest || tempFlag)
-                {
-                    long temp = rowheight[i];
-                    heightsWithoutIdoLong += temp * tempCount;
-                    tempCount *= 10;
-                }
+            //     List<int> heightsWithoutIdo = new List<int>(_rowheight);
+            _heightsWithoutIdo.Remove(smallest);
 
 
-                if (rowheight[i] == smallest)
-                    tempFlag = true;
-            }*/
-
-
-            List<int> heightsWithoutIdo = new List<int>(rowheight);
-            heightsWithoutIdo.Remove(smallest);
-
-
-            int sumofheight = rowheight.Sum();
+            int sumofheight = _rowheight.Sum();
 
             int holecount = 0;
 
@@ -211,8 +87,8 @@ namespace TetAIDotNET
             {
                 for (int x = 0; x < Environment.FIELD_WIDTH; x++)
                 {
-                    if (field.Get(x + y * 10) &&
-                     !field.Get(x + (y - 1) * 10))
+                    if (field[x + y * 10] &&
+                     !field[x + (y - 1) * 10])
                     {
                         holecount++;
                     }
@@ -221,9 +97,9 @@ namespace TetAIDotNET
 
 
             int bump = 0;
-            for (int i = 0; i < rowheight.Length - 1 - 1; i++)
+            for (int i = 0; i < _rowheight.Length - 1 - 1; i++)
             {
-                bump += Math.Abs(heightsWithoutIdo[i] - heightsWithoutIdo[i + 1]);
+                bump += Math.Abs(_heightsWithoutIdo[i] - _heightsWithoutIdo[i + 1]);
                 //     bump += Math.Abs(GetValue(heightsWithoutIdoLong, i) - GetValue(heightsWithoutIdoLong, i + 1));
             }
 
