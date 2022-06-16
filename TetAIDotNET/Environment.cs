@@ -170,6 +170,7 @@ namespace TetAIDotNET
         /// <param name="srstest"></param>
         /// <param name="rotate"></param>
         /// <param name="rotation"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void MoveForSRS(Vector2[,] srstest, Rotate rotate, Rotation rotation)
         {
             if (rotate == Rotate.Right)
@@ -343,7 +344,7 @@ namespace TetAIDotNET
         /// <summary>
         /// フィールドデータ
         /// </summary>
-        BitArray field = new BitArray(FIELD_WIDTH * FIELD_HEIGHT);
+        bool[] field = new bool[FIELD_WIDTH * FIELD_HEIGHT];
         /// <summary>
         /// ホールドフラグ
         /// </summary>
@@ -440,7 +441,7 @@ namespace TetAIDotNET
                 var x = _nowMino.GetPosition(i, true);
                 var y = _nowMino.GetPosition(i, false);
 
-                if (field.Get(x + y * 10))
+                if (field[x + y * 10])
                 {
                     _dead = true;
                     break;
@@ -482,7 +483,7 @@ namespace TetAIDotNET
 
         public long Search()
         {
-            return BeemSearch.GetBestMove(_nowMino.MinoKind, _next, _nowHold, _canHold, field,2);
+            return BeemSearch.GetBestMove(_nowMino.MinoKind, _next, _nowHold, _canHold, field, 2);
         }
 
         public void PrintGame()
@@ -581,7 +582,9 @@ namespace TetAIDotNET
                 RefreshNext(_next);
             }
 
-            field.SetAll(false);
+            for (int x = 0; x < FIELD_WIDTH; x++)
+                for (int y = 0; y < FIELD_HEIGHT; y++)
+                    field[x + y * 10] = false;
 
             CreateMino();
         }
@@ -603,7 +606,7 @@ namespace TetAIDotNET
                 int x = _nowMino.GetPosition(i, true);
                 int y = _nowMino.GetPosition(i, false);
 
-                field.Set(x + y * 10, true);
+                field[x + y * 10] = true;
             }
 
             _score += 2;
@@ -654,7 +657,7 @@ namespace TetAIDotNET
     /// </summary>
     partial class Environment
     {
-        static public bool CheckValidPos(BitArray field, Mino mino, Vector2 trymove, int add = 0)
+        static public bool CheckValidPos(bool[] field, Mino mino, Vector2 trymove, int add = 0)
         {
             for (int i = 0; i < 4; i++)
             {
@@ -665,7 +668,7 @@ namespace TetAIDotNET
                    x + trymove.x >= 0 &&
                    y + trymove.y >= 0 &&
                    y + trymove.y < FIELD_HEIGHT &&
-                   !field.Get((x + trymove.x) + (y + trymove.y) * 10))
+                   !field[(x + trymove.x) + (y + trymove.y) * 10])
                 {
 
                 }
@@ -677,7 +680,7 @@ namespace TetAIDotNET
 
             return true;
         }
-        static public int CheckAndClearLine(BitArray field)
+        static public int CheckAndClearLine(bool[] field)
         {
             int values = 0;
             int valueCount = 0;
@@ -688,7 +691,7 @@ namespace TetAIDotNET
                 flag = true;
                 for (int x = 0; x < FIELD_WIDTH; x++)
                 {
-                    if (!field.Get(x + y * 10))
+                    if (!field[x + y * 10])
                     {
                         flag = false;
                         break;
@@ -712,7 +715,7 @@ namespace TetAIDotNET
 
             return valueCount;
         }
-        static private void DownLine(int value, int valueCount, BitArray field)
+        static private void DownLine(int value, int valueCount, bool[] field)
         {
             if (valueCount == 0)
                 return;
@@ -739,9 +742,9 @@ namespace TetAIDotNET
                 for (int x = 0; x < FIELD_WIDTH; x++)
                 {
                     if (y + index >= FIELD_HEIGHT)
-                        field.Set(x + y * 10, false);
+                        field[x + y * 10] = false;
                     else
-                        field.Set(x + y * 10, field.Get(x + (y + index) * 10));
+                        field[x + y * 10] = field[x + (y + index) * 10];
                 }
             }
 
@@ -789,7 +792,7 @@ namespace TetAIDotNET
                     return environment._score - 3000;
 
                 if (environment._clearedLine >= 150)
-                return environment._score;
+                    return environment._score;
 
             }
 
@@ -817,7 +820,7 @@ namespace TetAIDotNET
     /// </summary>
     partial class Environment
     {
-        static public bool TryRotate(Rotate rotate, BitArray field, ref Mino current, out Vector2? srspos)
+        static public bool TryRotate(Rotate rotate, bool[] field, ref Mino current, out Vector2? srspos)
         {
             //simplerotateの中ででかくして
             srspos = null;

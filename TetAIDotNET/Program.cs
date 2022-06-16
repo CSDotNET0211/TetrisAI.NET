@@ -36,6 +36,9 @@ namespace TetAIDotNET
             Console.WriteLine("4.デバッグ");
 
             var key = Console.ReadKey().Key;
+
+            Console.Clear();
+
             Environment environment = new Environment();
             environment.Init();
             Evaluation.Weight = new float[] { 200.1597f, 319.1632f, -1149.735f, 118.6968f, 187.1296f, -604.2106f, -551.1594f, -364.9467f, -43.58047f, };
