@@ -18,14 +18,6 @@ namespace TetAIDotNET
 
         static void Main(string[] args)
         {
-
-            //Console.WriteLine(Marshal.SizeOf(typeof(Mino)));
-            Console.WriteLine(Convert.ToString(long.MaxValue, 10));
-            Console.WriteLine(Convert.ToString(5000, 10));
-
-            // Mino.GetPosition(ref value,);
-
-            // MisaMinoNET.MisaMino.FindMove(,,,,,,)
             Console.WriteLine("TetrisAI.NET");
             int worker, io;
             CPU_THREADCOUNT = System.Environment.ProcessorCount;
@@ -34,7 +26,6 @@ namespace TetAIDotNET
             ThreadPool.SetMinThreads(0, 0);
          //   ThreadPool.SetMaxThreads(1, 0);
             ThreadPool.SetMaxThreads(CPU_THREADCOUNT, 0);
-      //      DefaultSearch._semaphore = new SemaphoreSlim(0, CPU_THREADCOUNT);
 
                Console.WriteLine($"MAXThread Worker:{worker},IO:{io}\n");
             Console.WriteLine("CPUのスレッド数:" + CPU_THREADCOUNT);
@@ -47,7 +38,6 @@ namespace TetAIDotNET
             var key = Console.ReadKey().Key;
             Environment environment = new Environment();
             environment.Init();
-            // Evaluation.Weight = new float[] { -14937.3f, -8614.639f, -550.9185f, -487.5173f, -1525.667f, -58.71915f, 741.6671f, -325.8765f, -84.48547f, -223.764f, -54.847f, -219.4925f, 154.7065f, 481.9854f, 1180.017f, };
             Evaluation.Weight = new float[] { 200.1597f, 319.1632f, -1149.735f, 118.6968f, 187.1296f, -604.2106f, -551.1594f, -364.9467f, -43.58047f, };
             // 110.3654 -11176.37 234.8906 907.7881 -288.0103 -29667.07 893.7445 -696.517 -124.9767 1番目の評価:23776
             //200.1597 319.1632 -1149.735 118.6968 187.1296 -604.2106 -551.1594 -364.9467 -43.58047
