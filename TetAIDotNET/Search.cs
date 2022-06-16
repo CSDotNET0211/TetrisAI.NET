@@ -92,39 +92,14 @@ namespace TetAIDotNET
             return result;
         }
 
-
-
-
-
-
         static public void GetData(object dataobj)
         {
-            if (_fieldListThreadStatic == null)
-                _fieldListThreadStatic = new List<BitArray>();
-            else
-                _fieldListThreadStatic.Clear();
-
-            if (_patternsInThisMoveTemp == null)
-                _patternsInThisMoveTemp = new Dictionary<long, Pattern>();
-            else
-                _patternsInThisMoveTemp.Clear();
-
-            if (_passedBefore == null)
-                _passedBefore = new HashSet<long>();
-            else
-                _passedBefore.Clear();
+            Init();
 
             Data data = (Data)dataobj;
-            //GetBestと同じことする
-            //再帰の代わりにQueue登録
-
+            
             //ミノの種類からミノ情報作成
             var mino = Environment.CreateMino((MinoKind)data.Current);
-
-            //    var searchedData=new Dictionary<>
-
-            //  int listIndex;
-            // var list =;
 
             //検索関数に渡してパターンを列挙 
             SearchAndAddPatterns(mino, data.Field, 0, 0, ref data.BeforeEval, Action.Null, 0,
@@ -197,54 +172,46 @@ namespace TetAIDotNET
                         newcurrent /= 10;
                         tempDiv *= 10;
                     }
-
                     newnext %= tempDiv;
-
-                    //新しい検索に追加
 
                     Interlocked.Increment(ref _activeThreadCount);
                     var newdata = new Data(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, _fieldListThreadStatic[patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
                     _queue.TryAdd(newdata, Timeout.Infinite);
-
-                    //    GetBest(newcurrent, newnext, data.NextCount - 1, data.Hold, data.CanHold, _fieldsList[taskIndex][patternsInThisMove[beem].FieldIndex], first, patternsInThisMove[beem].Eval);
-                    //       Console.WriteLine("キュー追加"+ _queue.Count);
-
-
                 }
             }
 
-            //ListPool.Release(listIndex);
             Interlocked.Decrement(ref _activeThreadCount);
+
+            void Init()
+            {
+                if (_fieldListThreadStatic == null)
+                    _fieldListThreadStatic = new List<BitArray>();
+                else
+                    _fieldListThreadStatic.Clear();
+
+                if (_patternsInThisMoveTemp == null)
+                    _patternsInThisMoveTemp = new Dictionary<long, Pattern>();
+                else
+                    _patternsInThisMoveTemp.Clear();
+
+                if (_passedBefore == null)
+                    _passedBefore = new HashSet<long>();
+                else
+                    _passedBefore.Clear();
+            }
         }
 
         static public long GetLoop()
         {
             while (true)
             {
-                //すべてのスレッドが終了するまでは待ち続ける
-                //１つのスレッドを起動したときは、１０個ぐらい検索させる
-                //Queue一覧から検索する
-                //スレッドが全部帰ってきたときにキューがゼロだったら完了
                 Data data;
                 if (_queue.TryTake(out data, 10))
-                {
-                    //     Interlocked.Increment(ref _activeThreadCount);
-
                     ThreadPool.QueueUserWorkItem(GetData, (object)data);
-                    //      GetData(data);
-                }
                 else
-                {
-                    //     Console.WriteLine("待機");
-                    //スレッド数を表すスレッドセーフな数字を用意して、ここに到達したときゼロだったら検索完了
-
                     if (_activeThreadCount == 0)
-                    {
-                        //  Console.WriteLine("終了 best：" + _best.Value.Move);
                         return _best.Value.Move;
-                    }
-
-                }
+                
             }
         }
 
